@@ -54,8 +54,12 @@ def find_closest_hex(x,y, hex_list):
     closest_hex = hex_list[(np.argmin(dist_arr))]
     return closest_hex
 
+
 # Main game loop
 nest = 100
+
+track_score = 0
+score = 0
 out_of_the_nest = False
 player_position = nest
 hex_track = []
@@ -63,49 +67,30 @@ running = True
 text_area = pygame.Rect(100, 100, 150, 30)
 
 while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Check for left mouse button click
-            mouse_x, mouse_y = event.pos
-            next_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
-            if current_hex.is_neighbor(next_hex):
-                player_position = next_hex.ix
-            else:
-                draw_hexagon(next_hex.center_x, next_hex.center_y, color=GRAY)
-    # Draw the hexagonal grid
     screen.fill(BLACK)
     text_area = pygame.Rect(100, 100, 30, 30)
-    score_text = font.render(f"Score: {len(hex_track)}", True, HIGHLIGHT_COLOR)
+    score_text = font.render(f"Score: {score} ({track_score})", True, HIGHLIGHT_COLOR)
     screen.blit(score_text, (10, 10))
-
     row_step = ((3**.5)*(HEX_RADIUS)*(2/4))
     col_step = 3*HEX_RADIUS
     step = 0
     hex_list = []
     for row in range(0, HEIGHT, int(row_step)):
-        step=(1-step)
+        step = (1 - step)
         for col in range(0, WIDTH, int(col_step)):
-            draw_hexagon(col + step * 1.5*(HEX_RADIUS), row)
-            new_hex = Hex(ix =len(hex_list), r=HEX_RADIUS, center_x=col + step * 1.5 * HEX_RADIUS, center_y=row)
+            draw_hexagon(col + step * 1.5 * (HEX_RADIUS), row)
+            new_hex = Hex(ix=len(hex_list), r=HEX_RADIUS, center_x=col + step * 1.5 * HEX_RADIUS, center_y=row)
             hex_list.append(new_hex)
+    current_hex = hex_list[player_position]
 
+    if current_hex.ix == nest:
+        hex_track = []
 
     # Highlight the selected hexagon
     current_hex = hex_list[player_position]
     out_of_the_nest = current_hex.ix != nest
-    if not out_of_the_nest:
-        hex_track = []
-    current_hex.visited = True
-    track_step = True
-    for past_hex in hex_track:
-        if past_hex.ix == current_hex.ix:
-            track_step = False; continue
-    if track_step:
-        hex_track.append(current_hex)
-    #print(len(hex_track))
 
-    for hex in hex_track[:-1]:
+    for hex in hex_track:
         draw_hexagon(hex.center_x, hex.center_y, TRACK_COLOR)
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -114,6 +99,40 @@ while running:
 
     # Update and draw player position
     draw_hexagon(current_hex.center_x, current_hex.center_y, PLAYER_COLOR)
+
+
+
+
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Check for left mouse button click
+            mouse_x, mouse_y = event.pos
+            next_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
+            if current_hex.is_neighbor(next_hex):
+                player_position = next_hex.ix
+
+                if not out_of_the_nest:
+                    current_hex.visited = True
+                    track_step = True
+                    for past_hex in hex_track:
+                        if past_hex.ix == current_hex.ix:
+                            track_step = False;
+                            continue
+                if track_step:
+                    hex_track.append(current_hex)
+                    track_score += len(hex_track)
+                    # print(len(hex_track))
+                if next_hex.ix == nest:
+                    score += track_score
+                    track_score = 0
+
+            else:
+                draw_hexagon(next_hex.center_x, next_hex.center_y, color=GRAY)
+
+
+
 
 
     pygame.display.flip()
