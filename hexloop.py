@@ -100,17 +100,17 @@ while running:
     # Update and draw player position
     draw_hexagon(current_hex.center_x, current_hex.center_y, PLAYER_COLOR)
 
-
-
-
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Check for left mouse button click
             mouse_x, mouse_y = event.pos
             next_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
-            if current_hex.is_neighbor(next_hex):
+            bactrack = False
+            for hex in hex_track:
+                if hex.ix == next_hex.ix:
+                    bactrack = True; continue
+            if current_hex.is_neighbor(next_hex) and (not bactrack or next_hex.ix == nest):
                 player_position = next_hex.ix
 
                 if not out_of_the_nest:
@@ -130,10 +130,6 @@ while running:
 
             else:
                 draw_hexagon(next_hex.center_x, next_hex.center_y, color=GRAY)
-
-
-
-
 
     pygame.display.flip()
     clock.tick(FPS)
