@@ -6,7 +6,7 @@ import math
 from Hex import Hex
 from Player import Player
 import numpy as np
-
+import time
 # Initialize Pygame
 pygame.init()
 
@@ -22,7 +22,7 @@ HIGHLIGHT_COLOR = (255, 255, 0)  # Yellow for highlight
 TRACK_COLOR = (102, 153, 255)
 
 # Initialize the screen
-FONT_SIZE = 100
+FONT_SIZE = 30
 FONT_COLOR = BLACK
 # Initialize the screen and font
 
@@ -44,6 +44,7 @@ def draw_hexagon(x, y, color=GRAY):
     pygame.draw.polygon(screen, color, points, 0)
     pygame.draw.polygon(screen, BLACK, points, 2)
 
+
 def draw_hexgrid(height, width, hex_radius) -> list[Hex]:
     row_step = ((3 ** .5) * hex_radius * (2 / 4))
     col_step = 3 * hex_radius
@@ -56,6 +57,7 @@ def draw_hexgrid(height, width, hex_radius) -> list[Hex]:
             new_hex = Hex(ix=len(hex_list), r=hex_radius, center_x=col + step * 1.5 * HEX_RADIUS, center_y=row)
             hex_list.append(new_hex)
     return hex_list
+
 
 def find_closest_hex(x, y, hex_list):
     dist_arr = []
@@ -73,14 +75,15 @@ p = Player(id=0, pos=100)
 out_of_the_nest = False
 running = True
 text_area = pygame.Rect(100, 100, 150, 30)
-
+move_order = [6,6,6,6,6,6,6,6]
+move_order = move_order[::-1]
 while running:
     screen.fill(BLACK)
 
     hex_list = draw_hexgrid(height=HEIGHT, width=WIDTH, hex_radius=HEX_RADIUS)
     current_hex = hex_list[p.pos]
     text_area = pygame.Rect(100, 100, 30, 30)
-    score_text = font.render(f"Score: {p.score} ({p.track_score})", True, HIGHLIGHT_COLOR)
+    score_text = font.render(f"Score: {p.score} ({p.track_score})", True, FONT_COLOR)
 
     if current_hex.ix == p.nest:
         hex_track = []
@@ -96,19 +99,25 @@ while running:
 
     current_hex = hex_list[p.pos]
     draw_hexagon(current_hex.center_x, current_hex.center_y, PLAYER_COLOR)
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Check for left mouse button click
-            mouse_x, mouse_y = event.pos
-            next_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
-            backtrack = any(next_hex.ix == hex_pos for hex_pos in p.track)
-            if current_hex.is_neighbor(next_hex) and (not backtrack or next_hex.ix == p.nest):
-                p.move(next_hex.ix)
-
-            else:
-                print("Cannot move to that hex!")
+    
+    if len(move_order) > 0:
+        new_x, new_y = current_hex.generate_move_from_code(move_order.pop()) 
+        next_hex = find_closest_hex(new_x, new_y, hex_list)
+        p.move(next_hex.ix)
+        time.sleep(1)
+    else:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Check for left mouse button click
+                mouse_x, mouse_y = event.pos
+                next_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
+                backtrack = any(next_hex.ix == hex_pos for hex_pos in p.track)
+                if current_hex.is_neighbor(next_hex) and (not backtrack or next_hex.ix == p.nest):
+                    p.move(next_hex.ix)
+                    current_hex.find_move_code(next_hex)
+                else:
+                    print("Cannot move to that hex!")
 
     pygame.display.flip()
     clock.tick(FPS)
