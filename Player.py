@@ -17,6 +17,6 @@ class Player():
         if next_pos == self.nest:
             self.complete_loop()
         else:
-            self.track_score += len(self.track)-1
+            self.track_score += len(self.track)
             self.track.append(next_pos)
 
