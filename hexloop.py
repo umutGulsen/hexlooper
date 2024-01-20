@@ -7,12 +7,9 @@ from Hex import Hex
 from Player import Player
 import numpy as np
 import time
-# Initialize Pygame
-pygame.init()
-
 # Constants
-WIDTH, HEIGHT, HEX_RADIUS = 800, 600, 20
-FPS = 10
+WIDTH, HEIGHT, HEX_RADIUS = 800, 600, 10
+FPS = 512
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GRAY = (200, 200, 200)
@@ -20,17 +17,6 @@ GREEN = (0, 153, 51)
 PLAYER_COLOR = (153, 0, 0)
 HIGHLIGHT_COLOR = (255, 255, 0)  # Yellow for highlight
 TRACK_COLOR = (102, 153, 255)
-
-# Initialize the screen
-FONT_SIZE = 30
-FONT_COLOR = BLACK
-# Initialize the screen and font
-
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Hexlooper")
-clock = pygame.time.Clock()
-font = pygame.font.Font(None, FONT_SIZE)
-
 # Hexagon drawing function
 def draw_hexagon(x, y, color=GRAY):
     angle = 0
@@ -67,19 +53,32 @@ def find_closest_hex(x, y, hex_list):
     dist_arr = np.array(dist_arr)
     closest_hex = hex_list[(np.argmin(dist_arr))]
     return closest_hex
+# Initialize Pygame
+pygame.init()
+
+
+
+# Initialize the screen
+FONT_SIZE = 30
+FONT_COLOR = BLACK
+# Initialize the screen and font
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Hexlooper")
+clock = pygame.time.Clock()
+font = pygame.font.Font(None, FONT_SIZE)
 
 
 # Main game loop
 
-p = Player(id=0, pos=100)
+p = Player(id=0, pos=500)
 out_of_the_nest = False
 running = True
 text_area = pygame.Rect(100, 100, 150, 30)
-move_order = [6,6,6,6,6,6,6,6]
-move_order = move_order[::-1]
+move_order = list((np.random.rand(2000)*6 + 1).astype(int))[::-1]
+
 while running:
     screen.fill(BLACK)
-
     hex_list = draw_hexgrid(height=HEIGHT, width=WIDTH, hex_radius=HEX_RADIUS)
     current_hex = hex_list[p.pos]
     text_area = pygame.Rect(100, 100, 30, 30)
@@ -103,8 +102,10 @@ while running:
     if len(move_order) > 0:
         new_x, new_y = current_hex.generate_move_from_code(move_order.pop()) 
         next_hex = find_closest_hex(new_x, new_y, hex_list)
-        p.move(next_hex.ix)
-        time.sleep(1)
+        backtrack = any(next_hex.ix == hex_pos for hex_pos in p.track)
+        if not backtrack or True:
+            p.move(next_hex.ix)
+            time.sleep(.001)
     else:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
