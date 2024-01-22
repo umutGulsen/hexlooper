@@ -8,8 +8,8 @@ from Player import Player
 import numpy as np
 import time
 # Constants
-WIDTH, HEIGHT, HEX_RADIUS = 400, 400, 10
-FPS = 1024
+WIDTH, HEIGHT, HEX_RADIUS = 300, 700, 10
+FPS = 10
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GRAY = (200, 200, 200)
@@ -107,40 +107,56 @@ font = pygame.font.Font(None, FONT_SIZE)
 
 # Main game loop
 
-p = Player(id=0, pos=2)
+p1 = Player(id=0, pos=20)
+p2 = Player(id=1, pos=100)
 out_of_the_nest = False
 running = True
 text_area = pygame.Rect(100, 100, 150, 30)
-move_order = list((np.random.rand(2000)*6 + 1).astype(int))[::-1]
+move_order = list((np.random.rand(200)*6 + 1).astype(int))[::-1]
 
 
 
-
+players = [p1,p2]
 while running:
 
-    hex_list = display_game(players=[p])
-    current_hex = hex_list[p.pos]
-    draw_hexagon(current_hex.center_x, current_hex.center_y, PLAYER_COLOR)
-    if len(move_order) > 0:
-        new_x, new_y = current_hex.generate_move_from_code(move_order.pop()) 
-        next_hex = find_closest_hex(new_x, new_y, hex_list)
-        backtrack = any(next_hex.ix == hex_pos for hex_pos in p.track)
-        if not backtrack or True:
-            p.move(next_hex.ix)
-            time.sleep(.001)
-    else:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Check for left mouse button click
-                mouse_x, mouse_y = event.pos
-                next_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
-                backtrack = any(next_hex.ix == hex_pos for hex_pos in p.track)
-                if current_hex.is_neighbor(next_hex) and (not backtrack or next_hex.ix == p.nest):
-                    p.move(next_hex.ix)
-                    current_hex.find_move_code(next_hex)
-                else:
-                    print(f"Cannot move to that hex!({current_hex.is_neighbor(next_hex)=}   {backtrack=}")
+    hex_list = display_game(players=players)
+    for p in players:
+        current_hex = hex_list[p.pos]
+        draw_hexagon(current_hex.center_x, current_hex.center_y, PLAYER_COLOR)
+        if len(move_order) > 0:
+            new_x, new_y = current_hex.generate_move_from_code(move_order.pop())
+            next_hex = find_closest_hex(new_x, new_y, hex_list)
+            backtrack = any(next_hex.ix == hex_pos for hex_pos in p.track) and (next_hex.ix == p.nest)
+            occupied = any(next_hex.ix == other_p.pos for other_p in players)
+            if not backtrack or True:
+                p.move(next_hex.ix)
+                time.sleep(.001)
+                current_hex.find_move_code(next_hex)
+                for other_p in players:
+                    if p.id != other_p.id and any(next_hex.ix == hex_pos for hex_pos in other_p.track):
+                        other_p.crash_track()
+
+
+
+        else:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Check for left mouse button click
+                    mouse_x, mouse_y = event.pos
+                    next_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
+                    for p_ in players:
+                        current_hex = hex_list[p_.pos]
+                        backtrack = any(next_hex.ix == hex_pos for hex_pos in p_.track)
+                        occupied = any(next_hex.ix == other_p.pos for other_p in players)
+                        if current_hex.is_neighbor(next_hex) and (not backtrack or next_hex.ix == p_.nest) and not occupied:
+                            p_.move(next_hex.ix)
+                            current_hex.find_move_code(next_hex)
+                            for other_p in players:
+                                if p_.id != other_p.id and any(next_hex.ix == hex_pos for hex_pos in other_p.track):
+                                    other_p.crash_track()
+                        else:
+                            print(f"Cannot move to that hex!(is neighbor:{current_hex.is_neighbor(next_hex)}   {backtrack=}")
 
     pygame.display.flip()
     clock.tick(FPS)

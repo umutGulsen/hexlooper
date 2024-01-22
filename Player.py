@@ -20,3 +20,7 @@ class Player():
             self.track_score += len(self.track)
             self.track.append(next_pos)
 
+    def crash_track(self):
+        self.nest = self.pos
+        self.track = [self.nest]
+        self.track_score = 0
