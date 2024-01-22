@@ -1,4 +1,6 @@
 import math
+
+
 class Hex():
     def __init__(self, ix, r=None, center_x=None, center_y=None):
         self.ix = ix

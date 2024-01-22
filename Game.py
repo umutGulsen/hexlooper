@@ -8,3 +8,8 @@ class Game(object):
             players.append(Player(id=i, pos=player_starting_positions[i]))
         self.players = players
 
+    def find_winner(self):
+        pass
+
+    def start_game(self):
+        pass

@@ -6,6 +6,7 @@ class Player():
         self.track = [pos]
         self.score = 0
         self.track_score = 0
+        self.consec_stalls = 0
 
     def complete_loop(self):
         self.track = [self.nest]
