@@ -18,6 +18,8 @@ PLAYER_COLOR = (153, 0, 0)
 HIGHLIGHT_COLOR = (255, 255, 0)  # Yellow for highlight
 TRACK_COLOR = (102, 153, 255)
 # Hexagon drawing function
+
+
 def draw_hexagon(x, y, color=GRAY):
     angle = 0
     points = []
@@ -54,10 +56,26 @@ def find_closest_hex(x, y, hex_list):
     closest_hex = hex_list[(np.argmin(dist_arr))]
     return closest_hex
 # Initialize Pygame
+
+
+def display_game(p):
+    screen.fill(BLACK)
+    hex_list = draw_hexgrid(height=HEIGHT, width=WIDTH, hex_radius=HEX_RADIUS)
+    text_area = pygame.Rect(100, 100, 30, 30)
+    score_text = font.render(f"Score: {p.score} ({p.track_score})", True, FONT_COLOR)
+
+    for hex_pos in p.track:
+        hex_in_track = hex_list[hex_pos]
+        draw_hexagon(hex_in_track.center_x, hex_in_track.center_y, TRACK_COLOR)
+    draw_hexagon(hex_list[p.nest].center_x, hex_list[p.nest].center_y, GREEN)
+    screen.blit(score_text, (10, 10))
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    closest_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
+    draw_hexagon(closest_hex.center_x, closest_hex.center_y, color=HIGHLIGHT_COLOR)
+    return hex_list
+
+
 pygame.init()
-
-
-
 # Initialize the screen
 FONT_SIZE = 30
 FONT_COLOR = BLACK
@@ -77,28 +95,14 @@ running = True
 text_area = pygame.Rect(100, 100, 150, 30)
 move_order = list((np.random.rand(2000)*6 + 1).astype(int))[::-1]
 
+
+
+
 while running:
-    screen.fill(BLACK)
-    hex_list = draw_hexgrid(height=HEIGHT, width=WIDTH, hex_radius=HEX_RADIUS)
-    current_hex = hex_list[p.pos]
-    text_area = pygame.Rect(100, 100, 30, 30)
-    score_text = font.render(f"Score: {p.score} ({p.track_score})", True, FONT_COLOR)
 
-    if current_hex.ix == p.nest:
-        hex_track = []
-
-    for hex_pos in p.track:
-        hex_in_track = hex_list[hex_pos]
-        draw_hexagon(hex_in_track.center_x, hex_in_track.center_y, TRACK_COLOR)
-    draw_hexagon(hex_list[p.nest].center_x, hex_list[p.nest].center_y, GREEN)
-    screen.blit(score_text, (10, 10))
-    mouse_x, mouse_y = pygame.mouse.get_pos()
-    closest_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
-    draw_hexagon(closest_hex.center_x, closest_hex.center_y, color=HIGHLIGHT_COLOR)
-
+    hex_list = display_game(p=p)
     current_hex = hex_list[p.pos]
     draw_hexagon(current_hex.center_x, current_hex.center_y, PLAYER_COLOR)
-    
     if len(move_order) > 0:
         new_x, new_y = current_hex.generate_move_from_code(move_order.pop()) 
         next_hex = find_closest_hex(new_x, new_y, hex_list)
