@@ -12,7 +12,7 @@ class Hex():
         x2, y2 = other_hex.center_x, other_hex.center_y
         dist = ((x1 - x2)**2 + (y1 - y2)**2)**.5
         exp_dist = self.r * (3 ** .5)
-        return abs(dist - exp_dist) < self.r / 10
+        return abs(dist - exp_dist) < self.r / 3
 
     def find_move_code(self, other_hex: object):
         small_val = self.r / 10

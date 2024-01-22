@@ -8,8 +8,8 @@ from Player import Player
 import numpy as np
 import time
 # Constants
-WIDTH, HEIGHT, HEX_RADIUS = 800, 600, 10
-FPS = 512
+WIDTH, HEIGHT, HEX_RADIUS = 400, 400, 10
+FPS = 1024
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GRAY = (200, 200, 200)
@@ -18,6 +18,17 @@ PLAYER_COLOR = (153, 0, 0)
 HIGHLIGHT_COLOR = (255, 255, 0)  # Yellow for highlight
 TRACK_COLOR = (102, 153, 255)
 # Hexagon drawing function
+
+def draw_track(p,hex_list):
+    if len(p.track) > 1:
+        points = []
+
+        for hex_pos in p.track:
+            hex=hex_list[hex_pos]
+            x, y = hex.center_x, hex.center_y
+            points.append((x,y))
+
+        pygame.draw.polygon(screen, PLAYER_COLOR, points, 2)
 
 
 def draw_hexagon(x, y, color=GRAY):
@@ -38,9 +49,9 @@ def draw_hexgrid(height, width, hex_radius) -> list[Hex]:
     col_step = 3 * hex_radius
     step = 0
     hex_list: list[Hex] = []
-    for row in range(0, height, int(row_step)):
+    for row in range(2*int(row_step), height-2*int(row_step), int(row_step)):
         step = (1 - step)
-        for col in range(0, width, int(col_step)):
+        for col in range(1*int(col_step), width-1*int(col_step), int(col_step)):
             draw_hexagon(col + step * 1.5 * hex_radius, row)
             new_hex = Hex(ix=len(hex_list), r=hex_radius, center_x=col + step * 1.5 * HEX_RADIUS, center_y=row)
             hex_list.append(new_hex)
@@ -58,17 +69,24 @@ def find_closest_hex(x, y, hex_list):
 # Initialize Pygame
 
 
-def display_game(p):
-    screen.fill(BLACK)
-    hex_list = draw_hexgrid(height=HEIGHT, width=WIDTH, hex_radius=HEX_RADIUS)
-    text_area = pygame.Rect(100, 100, 30, 30)
-    score_text = font.render(f"Score: {p.score} ({p.track_score})", True, FONT_COLOR)
-
+def draw_player_related_hexes(p, hex_list):
     for hex_pos in p.track:
         hex_in_track = hex_list[hex_pos]
         draw_hexagon(hex_in_track.center_x, hex_in_track.center_y, TRACK_COLOR)
     draw_hexagon(hex_list[p.nest].center_x, hex_list[p.nest].center_y, GREEN)
-    screen.blit(score_text, (10, 10))
+    draw_track(p, hex_list)
+    #screen.blit(score_text, (10, 10))
+
+
+def display_game(players):
+    screen.fill(BLACK)
+    hex_list = draw_hexgrid(height=HEIGHT, width=WIDTH, hex_radius=HEX_RADIUS)
+    #text_area = pygame.Rect(100, 100, 30, 30)
+
+    for p in players:
+        # score_text = font.render(f"Score: {p.score} ({p.track_score})", True, FONT_COLOR)
+        draw_player_related_hexes(p, hex_list)
+
     mouse_x, mouse_y = pygame.mouse.get_pos()
     closest_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
     draw_hexagon(closest_hex.center_x, closest_hex.center_y, color=HIGHLIGHT_COLOR)
@@ -89,7 +107,7 @@ font = pygame.font.Font(None, FONT_SIZE)
 
 # Main game loop
 
-p = Player(id=0, pos=500)
+p = Player(id=0, pos=2)
 out_of_the_nest = False
 running = True
 text_area = pygame.Rect(100, 100, 150, 30)
@@ -100,7 +118,7 @@ move_order = list((np.random.rand(2000)*6 + 1).astype(int))[::-1]
 
 while running:
 
-    hex_list = display_game(p=p)
+    hex_list = display_game(players=[p])
     current_hex = hex_list[p.pos]
     draw_hexagon(current_hex.center_x, current_hex.center_y, PLAYER_COLOR)
     if len(move_order) > 0:
@@ -122,7 +140,7 @@ while running:
                     p.move(next_hex.ix)
                     current_hex.find_move_code(next_hex)
                 else:
-                    print("Cannot move to that hex!")
+                    print(f"Cannot move to that hex!({current_hex.is_neighbor(next_hex)=}   {backtrack=}")
 
     pygame.display.flip()
     clock.tick(FPS)
