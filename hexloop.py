@@ -11,18 +11,21 @@ import numpy as np
 import time
 
 # Constants
-WIDTH, HEIGHT, HEX_RADIUS = 1000, 600, 10
-FPS = 4000
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-GRAY = (200, 200, 200)
-GREEN = (0, 153, 51)
-PLAYER_COLOR = (153, 0, 0)
-HIGHLIGHT_COLOR = (255, 255, 0)  # Yellow for highlight
-TRACK_COLOR = (102, 153, 255)
+board_config = {"height": 600,
+                "width": 1000,
+                "hex_radius": 10
+                }
+FPS = 400000
 
-
-# Hexagon drawing function
+colors = {
+    "BLACK": (0, 0, 0),
+    "WHITE": (255, 255, 255),
+    "GRAY": (200, 200, 200),
+    "GREEN": (0, 153, 51),
+    "PLAYER_COLOR": (153, 0, 0),
+    "HIGHLIGHT_COLOR": (255, 255, 0),  # Yellow for highlight
+    "TRACK_COLOR": (102, 153, 255)
+}
 
 
 def draw_track(p, hex_list):
@@ -34,20 +37,20 @@ def draw_track(p, hex_list):
             x, y = hex.center_x, hex.center_y
             points.append((x, y))
 
-        pygame.draw.polygon(screen, PLAYER_COLOR, points, 2)
+        pygame.draw.polygon(screen, colors["PLAYER_COLOR"], points, 2)
 
 
-def draw_hexagon(x, y, color=GRAY):
+def draw_hexagon(x, y, color=colors["GRAY"]):
     angle = 0
     points = []
     for _ in range(6):
-        x_i = x + HEX_RADIUS * math.cos(math.radians(angle))
-        y_i = y + HEX_RADIUS * math.sin(math.radians(angle))
+        x_i = x + board_config["hex_radius"] * math.cos(math.radians(angle))
+        y_i = y + board_config["hex_radius"] * math.sin(math.radians(angle))
         points.append((int(x_i), int(y_i)))
         angle += 60
 
     pygame.draw.polygon(screen, color, points, 0)
-    pygame.draw.polygon(screen, BLACK, points, 2)
+    pygame.draw.polygon(screen, colors["BLACK"], points, 2)
 
 
 def draw_hexgrid(height, width, hex_radius) -> list[Hex]:
@@ -59,7 +62,7 @@ def draw_hexgrid(height, width, hex_radius) -> list[Hex]:
         step = (1 - step)
         for col in range(1 * col_step, width - 6 * col_step, col_step):
             draw_hexagon(col + step * 1.5 * hex_radius, row)
-            new_hex = Hex(ix=len(hex_list), r=hex_radius, center_x=col + step * 1.5 * HEX_RADIUS, center_y=row)
+            new_hex = Hex(ix=len(hex_list), r=hex_radius, center_x=col + step * 1.5 * board_config["hex_radius"], center_y=row)
             hex_list.append(new_hex)
     return hex_list
 
@@ -77,28 +80,28 @@ def find_closest_hex(x, y, hex_list):
 def draw_player_related_hexes(p, hex_list):
     for hex_pos in p.track:
         hex_in_track = hex_list[hex_pos]
-        draw_hexagon(hex_in_track.center_x, hex_in_track.center_y, TRACK_COLOR)
-    draw_hexagon(hex_list[p.nest].center_x, hex_list[p.nest].center_y, GREEN)
-    draw_hexagon(hex_list[p.pos].center_x, hex_list[p.pos].center_y, PLAYER_COLOR)
+        draw_hexagon(hex_in_track.center_x, hex_in_track.center_y, colors["TRACK_COLOR"])
+    draw_hexagon(hex_list[p.nest].center_x, hex_list[p.nest].center_y, colors["GREEN"])
+    draw_hexagon(hex_list[p.pos].center_x, hex_list[p.pos].center_y, colors["PLAYER_COLOR"])
     draw_track(p, hex_list)
 
 
-def display_game(players):
-    screen.fill(BLACK)
-    hex_list = draw_hexgrid(height=HEIGHT, width=WIDTH, hex_radius=HEX_RADIUS)
+def display_game(players, highlight=False):
+    screen.fill(colors["BLACK"])
+    hex_list = draw_hexgrid(height=board_config["height"], width=board_config["width"], hex_radius=board_config["hex_radius"])
 
     for p in players:
         # text_area = pygame.Rect(500, 100, 30, 30)
-        score_text = font.render(f"Score: P{p.id}: {p.score} ({p.track_score})", True, PLAYER_COLOR)
+        score_text = font.render(f"Score: P{p.id}: {p.score} ({p.track_score})", True, colors["PLAYER_COLOR"])
         draw_player_related_hexes(p, hex_list)
         screen.blit(score_text, (835, 10 + 20 * p.id))
-        id_text = font2.render(f"{p.id}", True, BLACK)
+        id_text = font2.render(f"{p.id}", True, colors["BLACK"])
         screen.blit(id_text,
-                    (hex_list[p.pos].center_x - HEX_RADIUS / (2.2), hex_list[p.pos].center_y - (HEX_RADIUS * .8)))
+                    (hex_list[p.pos].center_x - board_config["hex_radius"] / (2.2), hex_list[p.pos].center_y - (board_config["hex_radius"] * .8)))
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
     closest_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
-    draw_hexagon(closest_hex.center_x, closest_hex.center_y, color=HIGHLIGHT_COLOR)
+    draw_hexagon(closest_hex.center_x, closest_hex.center_y, color=colors["HIGHLIGHT_COLOR"])
     return hex_list
 
 
@@ -125,34 +128,32 @@ def execute_move(move, hex_list, p, players):
 pygame.init()
 # Initialize the screen
 FONT_SIZE = 25
-FONT_COLOR = GRAY
+FONT_COLOR = colors["GRAY"]
 # Initialize the screen and font
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((board_config["width"], board_config["height"]))
 pygame.display.set_caption("Hexlooper")
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, FONT_SIZE)
 font2 = pygame.font.Font(None, 26)
 
 # Main game loop
-board_config = {"height": HEIGHT,
-                "width": WIDTH,
-                "hex_radius": HEX_RADIUS
-                }
+
 g = Game(player_count=20, player_starting_positions="random", board_config=board_config)
 # p1 = Player(id=0, pos=800)
 
 out_of_the_nest = False
 running = True
 text_area = pygame.Rect(100, 100, 150, 30)
-move_order = list((np.random.rand(20000) * 6 + 1).astype(int))[::-1]
+move_order = list((np.random.rand(2000) * 6 + 1).astype(int))[::-1]
 
 players = g.players
-# [p1,p2, p3, p4]
+first = True
 
 while running:
-
-    hex_list = display_game(players=players)
+    if len(move_order) % 10 == 0 or first:
+        hex_list = display_game(players=players, highlight=len(move_order)==0)
+        first = False
     for p in players:
         current_hex = hex_list[p.pos]
         # draw_hexagon(current_hex.center_x, current_hex.center_y, PLAYER_COLOR)

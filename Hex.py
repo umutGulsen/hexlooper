@@ -1,6 +1,6 @@
 import math
 from typing import Tuple
-
+import functools
 
 class Hex:
     """Class representing a hexagon.
@@ -28,6 +28,7 @@ class Hex:
         self.center_y = center_y
         self.visited = False
 
+    @functools.lru_cache(maxsize=None)
     def is_neighbor(self, other_hex: 'Hex') -> bool:
         """Check if another hexagon is a neighbor of the current hexagon.
 

@@ -1,5 +1,9 @@
 from Player import Player
 import numpy as np
+import pygame
+import sys
+import math
+from Hex import Hex
 
 
 class Game(object):
@@ -15,8 +19,10 @@ class Game(object):
             players.append(Player(id=i, pos=int(np.random.rand()*hex_count)))
         self.players = players
 
-    def find_winner(self):
+
+    def run_game(self, fps):
         pass
 
-    def start_game(self):
+
+    def find_winner(self):
         pass
