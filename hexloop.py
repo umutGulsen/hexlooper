@@ -5,8 +5,11 @@ import sys
 import math
 from Hex import Hex
 from Player import Player
+from Game import Game
 import numpy as np
+
 import time
+
 # Constants
 WIDTH, HEIGHT, HEX_RADIUS = 1000, 600, 10
 FPS = 4000
@@ -17,17 +20,19 @@ GREEN = (0, 153, 51)
 PLAYER_COLOR = (153, 0, 0)
 HIGHLIGHT_COLOR = (255, 255, 0)  # Yellow for highlight
 TRACK_COLOR = (102, 153, 255)
+
+
 # Hexagon drawing function
 
 
-def draw_track(p,hex_list):
+def draw_track(p, hex_list):
     if len(p.track) > 1:
         points = []
 
         for hex_pos in p.track:
-            hex=hex_list[hex_pos]
+            hex = hex_list[hex_pos]
             x, y = hex.center_x, hex.center_y
-            points.append((x,y))
+            points.append((x, y))
 
         pygame.draw.polygon(screen, PLAYER_COLOR, points, 2)
 
@@ -52,7 +57,7 @@ def draw_hexgrid(height, width, hex_radius) -> list[Hex]:
     hex_list: list[Hex] = []
     for row in range(2 * row_step, height - 2 * row_step, row_step):
         step = (1 - step)
-        for col in range(1*col_step, width-6*col_step, col_step):
+        for col in range(1 * col_step, width - 6 * col_step, col_step):
             draw_hexagon(col + step * 1.5 * hex_radius, row)
             new_hex = Hex(ix=len(hex_list), r=hex_radius, center_x=col + step * 1.5 * HEX_RADIUS, center_y=row)
             hex_list.append(new_hex)
@@ -78,20 +83,18 @@ def draw_player_related_hexes(p, hex_list):
     draw_track(p, hex_list)
 
 
-
 def display_game(players):
     screen.fill(BLACK)
     hex_list = draw_hexgrid(height=HEIGHT, width=WIDTH, hex_radius=HEX_RADIUS)
 
-
     for p in players:
-        #text_area = pygame.Rect(500, 100, 30, 30)
+        # text_area = pygame.Rect(500, 100, 30, 30)
         score_text = font.render(f"Score: P{p.id}: {p.score} ({p.track_score})", True, PLAYER_COLOR)
         draw_player_related_hexes(p, hex_list)
-        screen.blit(score_text, (835, 10 + 20*p.id))
+        screen.blit(score_text, (835, 10 + 20 * p.id))
         id_text = font2.render(f"{p.id}", True, BLACK)
-        screen.blit(id_text, (hex_list[p.pos].center_x - HEX_RADIUS/(2.2), hex_list[p.pos].center_y - (HEX_RADIUS*.8)))
-
+        screen.blit(id_text,
+                    (hex_list[p.pos].center_x - HEX_RADIUS / (2.2), hex_list[p.pos].center_y - (HEX_RADIUS * .8)))
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
     closest_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
@@ -106,16 +109,19 @@ def execute_move(move, hex_list, p, players):
     occupied = any(next_hex.ix == other_p.pos for other_p in players)
     if current_hex.is_neighbor(next_hex) and not backtrack and not occupied or False:
         p.move(next_hex.ix)
-        #time.sleep(.001)
-        #current_hex.find_move_code(next_hex)
+        # time.sleep(.001)
+        # current_hex.find_move_code(next_hex)
         for other_p in players:
             if p.id != other_p.id and any(next_hex.ix == hex_pos for hex_pos in other_p.track):
                 other_p.crash_track()
+                break
         p.consec_stalls = 0
     elif current_hex.is_neighbor(next_hex) and backtrack:
         p.consec_stalls += 1
     if p.consec_stalls > 20:
         p.crash_track()
+
+
 pygame.init()
 # Initialize the screen
 FONT_SIZE = 25
@@ -128,26 +134,28 @@ clock = pygame.time.Clock()
 font = pygame.font.Font(None, FONT_SIZE)
 font2 = pygame.font.Font(None, 26)
 
-
 # Main game loop
+board_config = {"height": HEIGHT,
+                "width": WIDTH,
+                "hex_radius": HEX_RADIUS
+                }
+g = Game(player_count=20, player_starting_positions="random", board_config=board_config)
+# p1 = Player(id=0, pos=800)
 
-p1 = Player(id=0, pos=800)
-p2 = Player(id=1, pos=1200)
-p3 = Player(id=2, pos=1400)
-p4 = Player(id=3, pos=1600)
 out_of_the_nest = False
 running = True
 text_area = pygame.Rect(100, 100, 150, 30)
-move_order = list((np.random.rand(2000)*6 + 1).astype(int))[::-1]
+move_order = list((np.random.rand(20000) * 6 + 1).astype(int))[::-1]
 
+players = g.players
+# [p1,p2, p3, p4]
 
-players = [p1,p2, p3, p4]
 while running:
 
     hex_list = display_game(players=players)
     for p in players:
         current_hex = hex_list[p.pos]
-        #draw_hexagon(current_hex.center_x, current_hex.center_y, PLAYER_COLOR)
+        # draw_hexagon(current_hex.center_x, current_hex.center_y, PLAYER_COLOR)
         if len(move_order) > 0:
             execute_move(move_order.pop(), hex_list, p, players)
 
@@ -162,7 +170,8 @@ while running:
                         current_hex = hex_list[p_.pos]
                         backtrack = any(next_hex.ix == hex_pos for hex_pos in p_.track)
                         occupied = any(next_hex.ix == other_p.pos for other_p in players)
-                        if current_hex.is_neighbor(next_hex) and (not backtrack or next_hex.ix == p_.nest) and not occupied:
+                        if current_hex.is_neighbor(next_hex) and (
+                                not backtrack or next_hex.ix == p_.nest) and not occupied:
                             p_.move(next_hex.ix)
                             current_hex.find_move_code(next_hex)
                             for other_p in players:
@@ -170,7 +179,8 @@ while running:
                                     other_p.crash_track()
                             break
                         else:
-                            print(f"Cannot move to that hex!(is neighbor:{current_hex.is_neighbor(next_hex)}   {backtrack=}")
+                            print(
+                                f"Cannot move to that hex!(is neighbor:{current_hex.is_neighbor(next_hex)}   {backtrack=}")
 
     pygame.display.flip()
     clock.tick(FPS)
