@@ -2,6 +2,7 @@ import math
 from typing import Tuple
 import functools
 
+
 class Hex:
     """Class representing a hexagon.
 

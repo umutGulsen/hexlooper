@@ -15,7 +15,7 @@ board_config = {"height": 600,
                 "width": 1000,
                 "hex_radius": 10
                 }
-FPS = 400000
+FPS = 10
 
 colors = {
     "BLACK": (0, 0, 0),
@@ -62,7 +62,8 @@ def draw_hexgrid(height, width, hex_radius) -> list[Hex]:
         step = (1 - step)
         for col in range(1 * col_step, width - 6 * col_step, col_step):
             draw_hexagon(col + step * 1.5 * hex_radius, row)
-            new_hex = Hex(ix=len(hex_list), r=hex_radius, center_x=col + step * 1.5 * board_config["hex_radius"], center_y=row)
+            new_hex = Hex(ix=len(hex_list), r=hex_radius, center_x=col + step * 1.5 * board_config["hex_radius"],
+                          center_y=row)
             hex_list.append(new_hex)
     return hex_list
 
@@ -88,7 +89,8 @@ def draw_player_related_hexes(p, hex_list):
 
 def display_game(players, highlight=False):
     screen.fill(colors["BLACK"])
-    hex_list = draw_hexgrid(height=board_config["height"], width=board_config["width"], hex_radius=board_config["hex_radius"])
+    hex_list = draw_hexgrid(height=board_config["height"], width=board_config["width"],
+                            hex_radius=board_config["hex_radius"])
 
     for p in players:
         # text_area = pygame.Rect(500, 100, 30, 30)
@@ -97,7 +99,8 @@ def display_game(players, highlight=False):
         screen.blit(score_text, (835, 10 + 20 * p.id))
         id_text = font2.render(f"{p.id}", True, colors["BLACK"])
         screen.blit(id_text,
-                    (hex_list[p.pos].center_x - board_config["hex_radius"] / (2.2), hex_list[p.pos].center_y - (board_config["hex_radius"] * .8)))
+                    (hex_list[p.pos].center_x - board_config["hex_radius"] / (2.2),
+                     hex_list[p.pos].center_y - (board_config["hex_radius"] * .8)))
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
     closest_hex = find_closest_hex(mouse_x, mouse_y, hex_list)
@@ -139,26 +142,27 @@ font2 = pygame.font.Font(None, 26)
 
 # Main game loop
 
-g = Game(player_count=20, player_starting_positions="random", board_config=board_config)
+g = Game(player_count=2, player_starting_positions="random", board_config=board_config, random_move_count=100)
 # p1 = Player(id=0, pos=800)
 
 out_of_the_nest = False
 running = True
 text_area = pygame.Rect(100, 100, 150, 30)
-move_order = list((np.random.rand(2000) * 6 + 1).astype(int))[::-1]
+move_order = list((np.random.rand(100) * 6 + 1).astype(int))[::-1]
 
 players = g.players
 first = True
 
 while running:
-    if len(move_order) % 10 == 0 or first:
-        hex_list = display_game(players=players, highlight=len(move_order)==0)
+    if len(players[0].move_list) % 1 == 0 or first:
+        hex_list = display_game(players=players, highlight=len(players[0].move_list) == 0)
         first = False
     for p in players:
         current_hex = hex_list[p.pos]
         # draw_hexagon(current_hex.center_x, current_hex.center_y, PLAYER_COLOR)
-        if len(move_order) > 0:
-            execute_move(move_order.pop(), hex_list, p, players)
+        if len(p.move_list) > 0:
+            next_move, p.move_list = p.move_list[-1], p.move_list[:-1]
+            execute_move(next_move, hex_list, p, players)
 
         else:
             for event in pygame.event.get():
