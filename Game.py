@@ -4,6 +4,7 @@ import pygame
 import sys
 import math
 from Hex import Hex
+import functools
 
 
 class Game(object):
@@ -15,11 +16,9 @@ class Game(object):
         row_step = int((3 ** .5) * board_config["hex_radius"] * (2 / 4))
         col_step = int(3 * board_config["hex_radius"])
         hex_count = int((board_config["height"] / row_step - 4) * (board_config["width"] / col_step - 7))
-        # print(hex_count)
         players = []
         for i in range(player_count):
             pos = int(np.random.rand() * hex_count) if player_starting_positions == "random" else int(.5 * hex_count)
-            # print(pos)
             new_player = Player(id=i, pos=pos)
             new_player.generate_random_moves(random_move_count)
             players.append(new_player)
@@ -101,22 +100,34 @@ class Game(object):
             self.draw_hexagon(closest_hex.center_x, closest_hex.center_y, color=self.colors["HIGHLIGHT_COLOR"])
         return self.hex_list
 
+    @functools.lru_cache(maxsize=None)
     def find_closest_hex(self, x, y):
-        dist_arr = []
         for hex in self.hex_list:
             dist = (x - hex.center_x) ** 2 + (y - hex.center_y) ** 2
-            dist_arr.append(dist)
-        dist_arr = np.array(dist_arr)
-        closest_hex = self.hex_list[(np.argmin(dist_arr))]
-        return closest_hex
+            if dist < hex.r**2 / 3:
+                return hex
+        return None
+        #  else:
+            # dist_arr.append(dist)
+
+        # dist_arr = np.array(dist_arr)
+        # closest_hex = self.hex_list[(np.argmin(dist_arr))]
+        # return closest_hex
 
     def execute_move(self, move, p):
         current_hex = self.hex_list[p.pos]
         new_x, new_y = current_hex.generate_move_from_code(move)
         next_hex = self.find_closest_hex(new_x, new_y)
-        backtrack = any(next_hex.ix == hex_pos for hex_pos in p.track) and (next_hex.ix != p.nest)
-        occupied = any(next_hex.ix == other_p.pos for other_p in self.players)
-        if current_hex.is_neighbor(next_hex) and not backtrack and not occupied or False:
+        if next_hex is not None:
+            track_set = set(p.track)
+            backtrack = any(next_hex.ix == hex_pos for hex_pos in track_set) and (next_hex.ix != p.nest)
+            occupied = any(next_hex.ix == other_p.pos for other_p in self.players)
+            neighbored = current_hex.is_neighbor(next_hex)
+        else:
+            neighbored = False
+            backtrack = False
+            occupied = False
+        if neighbored and not backtrack and not occupied or False:
             p.move(next_hex.ix)
             # time.sleep(.001)
             # current_hex.find_move_code(next_hex)
@@ -125,54 +136,69 @@ class Game(object):
                     other_p.crash_track()
                     break
             p.consec_stalls = 0
-        elif current_hex.is_neighbor(next_hex) and backtrack:
+        elif neighbored and backtrack:
             p.consec_stalls += 1
         if p.consec_stalls > 20:
             p.crash_track()
 
-    def run_game(self, fps=64, display_interval: int = 1):
+    def run_game(self, fps=64, display_interval: int = 1, wait_for_user=False):
         pygame.init()
         running = True
         pygame.display.set_caption("Hexlooper")
         clock = pygame.time.Clock()
         first = True
         while running:
-            if len(self.players[0].move_list) % display_interval == 0 or first:
-                self.hex_list = self.display_game(players=self.players, highlight=len(self.players[0].move_list) == 0)
+            show_this_time = len(self.players[0].move_list) % display_interval == 0 or first
+            if show_this_time:
+                self.hex_list = self.display_game(players=self.players, highlight=False)
                 first = False
             for p in self.players:
                 if len(p.move_list) > 0:
                     next_move, p.move_list = p.move_list[-1], p.move_list[:-1]
                     self.execute_move(next_move, p)
                 else:
-                    for event in pygame.event.get():
-                        if event.type == pygame.QUIT:
-                            running = False
-                        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                            mouse_x, mouse_y = event.pos
-                            next_hex = self.find_closest_hex(mouse_x, mouse_y)
-                            for p_ in self.players:
-                                current_hex = self.hex_list[p_.pos]
-                                backtrack = any(next_hex.ix == hex_pos for hex_pos in p_.track)
-                                occupied = any(next_hex.ix == other_p.pos for other_p in self.players)
-                                if current_hex.is_neighbor(next_hex) and (
-                                        not backtrack or next_hex.ix == p_.nest) and not occupied:
-                                    p_.move(next_hex.ix)
-                                    current_hex.find_move_code(next_hex)
-                                    for other_p in self.players:
-                                        if p_.id != other_p.id and any(
-                                                next_hex.ix == hex_pos for hex_pos in other_p.track):
-                                            other_p.crash_track()
-                                    break
-                                else:
-                                    print(
-                                        f"Cannot move to that hex!(is neighbor:{current_hex.is_neighbor(next_hex)}   {backtrack=}")
-
-            pygame.display.flip()
+                    if not wait_for_user:
+                        running = False
+                        #pygame.quit()
+                    else:
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                running = False
+                            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                                mouse_x, mouse_y = event.pos
+                                next_hex = self.find_closest_hex(mouse_x, mouse_y)
+                                for p_ in self.players:
+                                    current_hex = self.hex_list[p_.pos]
+                                    backtrack = any(next_hex.ix == hex_pos for hex_pos in p_.track)
+                                    occupied = any(next_hex.ix == other_p.pos for other_p in self.players)
+                                    if current_hex.is_neighbor(next_hex) and (
+                                            not backtrack or next_hex.ix == p_.nest) and not occupied:
+                                        p_.move(next_hex.ix)
+                                        current_hex.find_move_code(next_hex)
+                                        for other_p in self.players:
+                                            if p_.id != other_p.id and any(
+                                                    next_hex.ix == hex_pos for hex_pos in other_p.track):
+                                                other_p.crash_track()
+                                        break
+                                    else:
+                                        print(
+                                            f"Cannot move to that hex!(is neighbor:{current_hex.is_neighbor(next_hex)}   {backtrack=}")
+            if show_this_time:
+                pygame.display.flip()
             clock.tick(fps)
 
         pygame.quit()
-        sys.exit()
 
     def find_winner(self):
-        pass
+        max_score = -1
+        champion = None
+        for p in self.players:
+            if p.score > max_score:
+                max_score = p.score
+                champion = p
+
+        return champion, max_score
+
+    def mutate_moves(self, move_list, mut_chance):
+        for p in self.players:
+            p.mutate_random_moves(move_list, per_move_mutation_chance=mut_chance)
