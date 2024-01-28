@@ -141,14 +141,14 @@ class Game(object):
         if p.consec_stalls > 20:
             p.crash_track()
 
-    def run_game(self, fps=64, display_interval: int = 1, wait_for_user=False):
+    def run_game(self, fps=64, display_interval: int = 1, wait_for_user=False, show_first_frame=True):
         pygame.init()
         running = True
         pygame.display.set_caption("Hexlooper")
         clock = pygame.time.Clock()
         first = True
         while running:
-            show_this_time = len(self.players[0].move_list) % display_interval == 0 or first
+            show_this_time = len(self.players[0].move_list) % display_interval == 0 or (first and show_first_frame)
             if show_this_time:
                 self.hex_list = self.display_game(players=self.players, highlight=False)
                 first = False
@@ -187,7 +187,7 @@ class Game(object):
                 pygame.display.flip()
             clock.tick(fps)
 
-        pygame.quit()
+
 
     def find_winner(self):
         max_score = -1

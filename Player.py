@@ -23,6 +23,7 @@ class Player():
                 shift = np.random.randint(1, 6)
                 move_list[i] = (move + shift) % 6
         self.move_list = move_list
+        self.static_move_list = move_list
 
     def complete_loop(self):
         self.track = [self.nest]
