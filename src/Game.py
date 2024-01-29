@@ -187,8 +187,6 @@ class Game(object):
                 pygame.display.flip()
             clock.tick(fps)
 
-
-
     def find_winner(self):
         max_score = -1
         champion = None

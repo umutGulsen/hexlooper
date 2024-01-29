@@ -2,7 +2,7 @@
 # HEXLOOPER
 ### A Reinforcement Learning Project
 <p align="center">
-<img src="images/poster.png" alt="Alt Text" width="256" height="256">
+<img src="images/poster.png" alt="Alt Text" width="400" height="400">
 </p>
 
 Welcome to Hexlooper!
@@ -18,5 +18,5 @@ Rules of the game:
  - At each move, their "track score" increases by the length of their track (1+2+3+...)
  - Players cannot move to a hex that is included in their track (no backtracking)
  - If they somehow loop back to their nests, their track score is added to their actual score, their track and track score are cleared
- - If a player steps on the track of another player, other player's track and track score is cleared adn their current hex becomes their new nest
+ - If a player steps on the track of another player, other player's track and track score is cleared and their current hex becomes their new nest
  - Player with the highest score wins!
