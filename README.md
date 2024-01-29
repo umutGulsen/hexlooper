@@ -1,8 +1,12 @@
 ![Banner](images/banner.png)
 # HEXLOOPER
 ### A Reinforcement Learning Project
+<p align="center">
+<img src="images/poster.png" alt="Alt Text" width="256" height="256">
+</p>
 
 Welcome to Hexlooper!
+
 This is a game created for AI agents to learn how to play.
 
 Rules of the game:
