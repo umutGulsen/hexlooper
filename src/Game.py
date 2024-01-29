@@ -1,29 +1,32 @@
 from Player import Player
 import numpy as np
 import pygame
-import sys
 import math
 from Hex import Hex
 import functools
-
+import copy
 
 class Game(object):
 
     def __init__(self, player_count: int, board_config, player_starting_positions="random", random_move_count=0,
-                 colors=None):
+                 turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str="default"):
         if colors is None:
             colors = {}
         row_step = int((3 ** .5) * board_config["hex_radius"] * (2 / 4))
         col_step = int(3 * board_config["hex_radius"])
         hex_count = int((board_config["height"] / row_step - 4) * (board_config["width"] / col_step - 7))
-        players = []
+        self.players = []
+        self.move_generation_type = move_generation_type
         for i in range(player_count):
             pos = int(np.random.rand() * hex_count) if player_starting_positions == "random" else int(.5 * hex_count)
             new_player = Player(id=i, pos=pos)
-            new_player.generate_random_moves(random_move_count)
-            players.append(new_player)
+            if self.move_generation_type == "list":
+                new_player.generate_random_moves(random_move_count)
+            self.players.append(new_player)
 
-        self.players = players
+        self.turn = 0
+        self.turn_limit = turn_limit
+        self.game_mode = game_mode
         self.hex_list = []
         self.board_config = board_config
         self.colors = colors
@@ -107,21 +110,15 @@ class Game(object):
             if dist < hex.r**2 / 3:
                 return hex
         return None
-        #  else:
-            # dist_arr.append(dist)
 
-        # dist_arr = np.array(dist_arr)
-        # closest_hex = self.hex_list[(np.argmin(dist_arr))]
-        # return closest_hex
-
-    def execute_move(self, move, p):
+    def execute_move(self, move: int, p):
         current_hex = self.hex_list[p.pos]
         new_x, new_y = current_hex.generate_move_from_code(move)
         next_hex = self.find_closest_hex(new_x, new_y)
         if next_hex is not None:
             track_set = set(p.track)
             backtrack = any(next_hex.ix == hex_pos for hex_pos in track_set) and (next_hex.ix != p.nest)
-            occupied = any(next_hex.ix == other_p.pos for other_p in self.players)
+            occupied = self.game_mode != "coexist" and any(next_hex.ix == other_p.pos for other_p in self.players)
             neighbored = current_hex.is_neighbor(next_hex)
         else:
             neighbored = False
@@ -132,7 +129,7 @@ class Game(object):
             # time.sleep(.001)
             # current_hex.find_move_code(next_hex)
             for other_p in self.players:
-                if p.id != other_p.id and any(next_hex.ix == hex_pos for hex_pos in other_p.track):
+                if self.game_mode != "coexist" and p.id != other_p.id and any(next_hex.ix == hex_pos for hex_pos in other_p.track):
                     other_p.crash_track()
                     break
             p.consec_stalls = 0
@@ -148,17 +145,18 @@ class Game(object):
         clock = pygame.time.Clock()
         first = True
         while running:
-            show_this_time = len(self.players[0].move_list) % display_interval == 0 or (first and show_first_frame)
+            show_this_time = self.turn % display_interval == 0 or (first and show_first_frame)
             if show_this_time:
                 self.hex_list = self.display_game(players=self.players, highlight=False)
                 first = False
+
             for p in self.players:
-                if len(p.move_list) > 0:
-                    next_move, p.move_list = p.move_list[-1], p.move_list[:-1]
+                if (self.turn_limit is None or self.turn < self.turn_limit) and (next_move := p.generate_move(generation_type=self.move_generation_type)) is not None:
                     self.execute_move(next_move, p)
                 else:
                     if not wait_for_user:
-                        running = False
+                        if self.turn_limit is None or self.turn < self.turn_limit:
+                            running = False
                         #pygame.quit()
                     else:
                         for event in pygame.event.get():
@@ -167,6 +165,8 @@ class Game(object):
                             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                                 mouse_x, mouse_y = event.pos
                                 next_hex = self.find_closest_hex(mouse_x, mouse_y)
+                                if next_hex is None:
+                                    continue
                                 for p_ in self.players:
                                     current_hex = self.hex_list[p_.pos]
                                     backtrack = any(next_hex.ix == hex_pos for hex_pos in p_.track)
@@ -186,6 +186,7 @@ class Game(object):
             if show_this_time:
                 pygame.display.flip()
             clock.tick(fps)
+            self.turn = (self.turn + 1) % int(1e6)
 
     def find_winner(self):
         max_score = -1
@@ -198,5 +199,6 @@ class Game(object):
         return champion, max_score
 
     def mutate_moves(self, move_list, mut_chance):
+        fix_move_list = copy.deepcopy(move_list)
         for p in self.players:
-            p.mutate_random_moves(move_list, per_move_mutation_chance=mut_chance)
+            p.mutate_random_moves(fix_move_list, per_move_mutation_chance=mut_chance)

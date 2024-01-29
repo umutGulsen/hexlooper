@@ -18,12 +18,15 @@ class Player():
         self.static_move_list = self.move_list
 
     def mutate_random_moves(self, move_list, per_move_mutation_chance: float = .001):
+        new_move_list = []
         for i, move in enumerate(move_list):
             if np.random.rand() < per_move_mutation_chance:
                 shift = np.random.randint(1, 6)
-                move_list[i] = (move + shift) % 6
-        self.move_list = move_list
-        self.static_move_list = move_list
+                new_move_list.append((move + shift) % 6)
+            else:
+                new_move_list.append(move)
+        self.move_list = new_move_list
+        self.static_move_list = new_move_list
 
     def complete_loop(self):
         self.track = [self.nest]
@@ -42,3 +45,13 @@ class Player():
         self.nest = self.pos
         self.track = [self.nest]
         self.track_score = 0
+
+    def generate_move(self, generation_type: str):
+        if generation_type == "list":
+            if len(self.move_list) == 0:
+                return None
+            m = self.move_list[-1]
+            self.move_list = self.move_list[:-1]
+            return m
+        if generation_type == "fixed":
+            return int(1)

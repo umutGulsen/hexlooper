@@ -1,13 +1,8 @@
-from typing import List
 import pygame
 import sys
-import math
-from Hex import Hex
-from Player import Player
 from Game import Game
 import numpy as np
-
-import time
+import copy
 
 board_config = {"height": 600,
                 "width": 1000,
@@ -26,90 +21,84 @@ colors = {
 
 # import cProfile
 # cProfile.run("g.run_game(fps=40960, display_interval=10000)", sort="tottime")
-initial_random_pop = 10
-move_length = 100
-display_interval = 1
-generations = 10
-pop_size = 5
-mutation_chance = .01
-
-import copy
 
 
 def genetic_algorithm(initial_random_pop: int, move_length: int, display_interval: int, generations: int, pop_size: int,
-                      mutation_chance: float):
-    scores = np.array([])
-    candidates = []
-    for i in range(initial_random_pop):
+                      mutation_chance: float, train_fps: int = 4096):
+
+    g = Game(player_count=initial_random_pop,
+             player_starting_positions="fixed",
+             board_config=board_config,
+             random_move_count=move_length,
+             move_generation_type="list",
+             game_mode="coexist",
+             colors=colors)
+    g.run_game(fps=train_fps, display_interval=display_interval)
+
+    champion, champ_score = g.find_winner()
+    champ_moves = champion.static_move_list
+
+    best_scores = []
+    for i in range(generations):
+        print(f"Started Generation {i}")
+        g = Game(player_count=pop_size,
+                 player_starting_positions="fixed",
+                 board_config=board_config,
+                 random_move_count=move_length,
+                 move_generation_type="list",
+                 game_mode="coexist",
+                 colors=colors)
+
+        move = copy.deepcopy(champ_moves)
+        g.mutate_moves(move, mut_chance=mutation_chance)
+
+        g.run_game(fps=train_fps, display_interval=display_interval)
+        gen_champ, score = g.find_winner()
+
+        best_scores.append(score)
+        if i > 0:
+            if best_scores[-1] > champ_score:
+                champ_score = best_scores[-1]
+                champ_moves = gen_champ.static_move_list
+
+        print(f"Finished Generation {i} with score: {score} / Last Champ: {champ_score}")
+    return champ_moves
+
+
+def display_ga_champion():
+    move_length = 30
+    best_moves = genetic_algorithm(initial_random_pop=20,
+                                   move_length=move_length,
+                                   display_interval=1,
+                                   generations=40,
+                                   pop_size=40,
+                                   mutation_chance=.15,
+                                   train_fps=48)
+    while True:
         g = Game(player_count=1,
                  player_starting_positions="fixed",
                  board_config=board_config,
                  random_move_count=move_length,
+                 move_generation_type="list",
                  colors=colors)
-        g.run_game(fps=1024, display_interval=display_interval)
-        cand, score = g.find_winner()
-        scores = np.append(scores, score)
-        candidates.append(cand)
 
-    champion = candidates[np.argmax(scores)]
-    champ_moves = champion.static_move_list
-
-    # champ_moves = None
-    best_scores = []
-    champ_score = -1
-    for i in range(generations):
-        print(f"Started Generation {i}")
-        scores = np.array([])
-        # candidates = []
-        cand_moves = []
-        for j in range(pop_size):
-            g = Game(player_count=1,
-                     player_starting_positions="fixed",
-                     board_config=board_config,
-                     random_move_count=move_length,
-                     colors=colors)
-            move = copy.deepcopy(champ_moves)
-            g.mutate_moves(move, mut_chance=mutation_chance)
-            g.run_game(fps=1024, display_interval=display_interval)
-            cand, score = g.find_winner()
-            cand_moves.append(cand.static_move_list)
-            scores = np.append(scores, score)
-            # print(scores)
-            # candidates.append(cand)
-        best_scores.append(np.max(scores))
-        if i > 0:
-            if best_scores[-1] > champ_score:
-                # champion = candidates[np.argmax(scores)]
-                champ_score = best_scores[-1]
-                champ_moves = cand_moves[np.argmax(scores)]
-                # print("--change")
-        else:
-            # champion = candidates[np.argmax(scores)]
-            champ_score = best_scores[0]
-            # champ_moves = champion.static_move_list
-            champ_moves = cand_moves[np.argmax(scores)]
-            # print("----change")
-        print(f"Finished Generation {i} with score: {np.max(scores)} / Last Champ: {champ_score}")
-        # print(champ_moves)
-    return champ_moves
+        g.mutate_moves(best_moves, mut_chance=0)
+        # time.sleep(10)
+        g.run_game(fps=12, display_interval=1, wait_for_user=False)
 
 
-best_moves = genetic_algorithm(initial_random_pop=40,
-                               move_length=100,
-                               display_interval=100,
-                               generations=30,
-                               pop_size=20,
-                               mutation_chance=.03)
-while True:
-    g = Game(player_count=1,
-             player_starting_positions="fixed",
-             board_config=board_config,
-             random_move_count=100,
-             colors=colors)
-    g.mutate_moves(best_moves, mut_chance=0)
-    # time.sleep(10)
-    g.run_game(fps=12, display_interval=1, wait_for_user=False)
+display_ga_champion()
 
+"""
+g = Game(player_count=5,
+         player_starting_positions="fixed",
+         board_config=board_config,
+         turn_limit=500,
+         move_generation_type="fixed",
+         game_mode="coexist",
+         colors=colors)
+g.run_game(fps=50, display_interval=1, wait_for_user=True)
+"""
 pygame.quit()
 # print(g.find_winner())
 sys.exit()
