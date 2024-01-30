@@ -4,6 +4,7 @@ from Game import Game
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 board_config = {"height": 600,
                 "width": 1000,
@@ -25,24 +26,13 @@ colors = {
 # cProfile.run("g.run_game(fps=40960, display_interval=10000)", sort="tottime")
 
 
-def genetic_algorithm(initial_random_pop: int, move_length: int, display_interval: int, generations: int, pop_size: int,
+def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_interval: int, generations: int, pop_size: int,
                       mutation_chance: float, train_fps: int = 4096):
     record = {}
-    generation_scores = np.zeros((generations+1, max(initial_random_pop, pop_size)))
-    champion_scores = np.zeros(generations+1)
-    g = Game(player_count=initial_random_pop,
-             player_starting_positions="fixed",
-             board_config=board_config,
-             random_move_count=move_length,
-             move_generation_type="list",
-             game_mode="coexist",
-             colors=colors)
-    g.run_game(fps=train_fps, display_interval=display_interval)
-
-    generation_scores[0, :] = [p.score for p in g.players]
-    champion, champ_score = g.find_winner()
-    champion_scores[0] = champ_score
-    champ_moves = champion.static_move_list
+    generation_scores = np.zeros((generations, pop_size))
+    champion_scores = np.zeros(generations)
+    champ_score = -1
+    champ_moves = ((np.random.rand(move_length) * 6 + 1).astype(int))
 
     best_scores = []
     for gen in range(generations):
@@ -56,19 +46,19 @@ def genetic_algorithm(initial_random_pop: int, move_length: int, display_interva
                  colors=colors)
 
         move = copy.deepcopy(champ_moves)
-        g.mutate_moves(move, mut_chance=mutation_chance)
+        if gen == 0:
+            g.mutate_moves(move, mut_chance=initial_mutation_chance)
+        else:
+            g.mutate_moves(move, mut_chance=mutation_chance)
 
         g.run_game(fps=train_fps, display_interval=display_interval)
-        generation_scores[gen+1, :] = [p.score for p in g.players]
-        gen_champ, score = g.find_winner()
-
-        best_scores.append(score)
-        if gen > 0:
-            if best_scores[-1] > champ_score:
-                champ_score = best_scores[-1]
-                champ_moves = gen_champ.static_move_list
-        champion_scores[gen + 1] = champ_score
-        print(f"Finished Generation {gen} with score: {score} / Last Champ: {champ_score}")
+        generation_scores[gen, :] = [p.score for p in g.players]
+        gen_champ, best_score = g.find_winner()
+        if best_score > champ_score:
+            champ_score = best_score
+            champ_moves = gen_champ.static_move_list
+        champion_scores[gen] = champ_score
+        print(f"Finished Generation {gen} with score: {best_score} / Last Champ: {champ_score}")
         record["champion_scores"] = champion_scores
         record["generation_scores"] = generation_scores
     return champ_moves, record
@@ -76,20 +66,22 @@ def genetic_algorithm(initial_random_pop: int, move_length: int, display_interva
 
 def visualize_scores(record):
     plt.plot(record["champion_scores"])
+
     for g, gen_score_list in enumerate(record["generation_scores"]):
-        [plt.scatter(g, gen_score_list[i]) for i in range(gen_score_list.shape[0])]
+        sns.scatterplot(x=[g for _ in range(gen_score_list.shape[0])], y=gen_score_list, color="k", hue=gen_score_list, legend=False)
+
     plt.show()
 
 
 def display_ga_champion(champ_disp_count=1):
-    move_length = 20
-    best_moves, record = genetic_algorithm(initial_random_pop=20,
+    move_length = 500
+    best_moves, record = genetic_algorithm(initial_mutation_chance=.8,
                                            move_length=move_length,
-                                           display_interval=1,
-                                           generations=10,
-                                           pop_size=20,
-                                           mutation_chance=.01,
-                                           train_fps=56)
+                                           display_interval=10,
+                                           generations=40,
+                                           pop_size=40,
+                                           mutation_chance=.005,
+                                           train_fps=800)
     for _ in range(champ_disp_count):
         g = Game(player_count=1,
                  player_starting_positions="fixed",
@@ -104,7 +96,7 @@ def display_ga_champion(champ_disp_count=1):
     visualize_scores(record)
 
 
-display_ga_champion(champ_disp_count=2)
+display_ga_champion(champ_disp_count=1)
 
 """
 g = Game(player_count=5,
