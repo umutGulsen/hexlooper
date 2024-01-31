@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Player():
-    def __init__(self, id, pos):
+    def __init__(self, id, pos, random_color=False):
         self.id = id
         self.pos = pos
         self.nest = pos
@@ -12,6 +12,12 @@ class Player():
         self.consec_stalls = 0
         self.move_list = []
         self.static_move_list = []
+        if random_color:
+            self.player_color = tuple(np.random.randint(1, 256, size=3))
+            self.track_color = tuple((x + y) / 2 for x, y in zip(self.player_color, (102, 153, 255)))
+        else:
+            self.track_color = (102, 153, 255)
+            self.player_color = (153, 0, 0)
 
     def generate_random_moves(self, move_count: int):
         self.move_list = ((np.random.rand(move_count) * 6 + 1).astype(int))

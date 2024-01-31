@@ -28,6 +28,7 @@ colors = {
 
 def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_interval: int, generations: int, pop_size: int,
                       mutation_chance: float, train_fps: int = 4096):
+
     record = {}
     generation_scores = np.zeros((generations, pop_size))
     champion_scores = np.zeros(generations)
@@ -43,7 +44,8 @@ def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_
                  random_move_count=move_length,
                  move_generation_type="list",
                  game_mode="coexist",
-                 colors=colors)
+                 colors=colors,
+                 random_player_colors=True)
 
         move = copy.deepcopy(champ_moves)
         if gen == 0:
@@ -74,14 +76,17 @@ def visualize_scores(record):
 
 
 def display_ga_champion(champ_disp_count=1):
-    move_length = 500
+    move_length = 100
+    theretical_max = move_length * (move_length + 1) / 2
+    print(f"Theoretical Max Score: {theretical_max}")
     best_moves, record = genetic_algorithm(initial_mutation_chance=.8,
                                            move_length=move_length,
-                                           display_interval=10,
-                                           generations=40,
-                                           pop_size=40,
-                                           mutation_chance=.005,
-                                           train_fps=800)
+                                           display_interval=50,
+                                           generations=80,
+                                           pop_size=100,
+                                           mutation_chance=.04,
+                                           train_fps=2048)
+    print(f"Achineved score (% of theoretical max): %{round(100*record['champion_scores'][-1]/theretical_max,2)}")
     for _ in range(champ_disp_count):
         g = Game(player_count=1,
                  player_starting_positions="fixed",
@@ -96,7 +101,7 @@ def display_ga_champion(champ_disp_count=1):
     visualize_scores(record)
 
 
-display_ga_champion(champ_disp_count=1)
+display_ga_champion(champ_disp_count=3)
 
 """
 g = Game(player_count=5,

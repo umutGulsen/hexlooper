@@ -6,10 +6,11 @@ from Hex import Hex
 import functools
 import copy
 
+
 class Game(object):
 
     def __init__(self, player_count: int, board_config, player_starting_positions="random", random_move_count=0,
-                 turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str="default"):
+                 turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str = "default", random_player_colors=False):
         if colors is None:
             colors = {}
         row_step = int((3 ** .5) * board_config["hex_radius"] * (2 / 4))
@@ -19,7 +20,7 @@ class Game(object):
         self.move_generation_type = move_generation_type
         for i in range(player_count):
             pos = int(np.random.rand() * hex_count) if player_starting_positions == "random" else int(.5 * hex_count)
-            new_player = Player(id=i, pos=pos)
+            new_player = Player(id=i, pos=pos, random_color=random_player_colors)
             if self.move_generation_type == "list":
                 new_player.generate_random_moves(random_move_count)
             self.players.append(new_player)
@@ -71,14 +72,14 @@ class Game(object):
                 x, y = hex_in_track.center_x, hex_in_track.center_y
                 points.append((x, y))
 
-            pygame.draw.polygon(self.screen, self.colors["PLAYER_COLOR"], points, 2)
+            pygame.draw.polygon(self.screen, p.player_color, points, 2)
 
     def draw_player_related_hexes(self, p):
         for hex_pos in p.track:
             hex_in_track = self.hex_list[hex_pos]
-            self.draw_hexagon(hex_in_track.center_x, hex_in_track.center_y, self.colors["TRACK_COLOR"])
+            self.draw_hexagon(hex_in_track.center_x, hex_in_track.center_y, p.track_color)
         self.draw_hexagon(self.hex_list[p.nest].center_x, self.hex_list[p.nest].center_y, self.colors["GREEN"])
-        self.draw_hexagon(self.hex_list[p.pos].center_x, self.hex_list[p.pos].center_y, self.colors["PLAYER_COLOR"])
+        self.draw_hexagon(self.hex_list[p.pos].center_x, self.hex_list[p.pos].center_y, p.player_color)
         self.draw_track(p)
 
     def display_game(self, players, highlight=False):
@@ -89,7 +90,7 @@ class Game(object):
         for p in players:
             # text_area = pygame.Rect(500, 100, 30, 30)
             score_text = self.scoreboard_font.render(f"Score: P{p.id}: {p.score} ({p.track_score})", True,
-                                                     self.colors["PLAYER_COLOR"])
+                                                     p.player_color)
             self.draw_player_related_hexes(p)
             self.screen.blit(score_text, (835, 10 + 20 * p.id))
             id_text = self.player_num_font.render(f"{p.id}", True, self.colors["BLACK"])
@@ -107,7 +108,7 @@ class Game(object):
     def find_closest_hex(self, x, y):
         for hex in self.hex_list:
             dist = (x - hex.center_x) ** 2 + (y - hex.center_y) ** 2
-            if dist < hex.r**2 / 3:
+            if dist < hex.r ** 2 / 3:
                 return hex
         return None
 
@@ -129,7 +130,8 @@ class Game(object):
             # time.sleep(.001)
             # current_hex.find_move_code(next_hex)
             for other_p in self.players:
-                if self.game_mode != "coexist" and p.id != other_p.id and any(next_hex.ix == hex_pos for hex_pos in other_p.track):
+                if self.game_mode != "coexist" and p.id != other_p.id and any(
+                        next_hex.ix == hex_pos for hex_pos in other_p.track):
                     other_p.crash_track()
                     break
             p.consec_stalls = 0
@@ -151,13 +153,14 @@ class Game(object):
                 first = False
 
             for p in self.players:
-                if (self.turn_limit is None or self.turn < self.turn_limit) and (next_move := p.generate_move(generation_type=self.move_generation_type)) is not None:
+                if (self.turn_limit is None or self.turn < self.turn_limit) and (
+                next_move := p.generate_move(generation_type=self.move_generation_type)) is not None:
                     self.execute_move(next_move, p)
                 else:
                     if not wait_for_user:
                         if self.turn_limit is None or self.turn < self.turn_limit:
                             running = False
-                        #pygame.quit()
+                        # pygame.quit()
                     else:
                         for event in pygame.event.get():
                             if event.type == pygame.QUIT:
