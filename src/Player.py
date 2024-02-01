@@ -1,4 +1,5 @@
 import numpy as np
+import seaborn as sns
 
 
 class Player():
@@ -13,11 +14,15 @@ class Player():
         self.move_list = []
         self.static_move_list = []
         if random_color:
-            self.player_color = tuple(np.random.randint(1, 256, size=3))
-            self.track_color = tuple((x + y) / 2 for x, y in zip(self.player_color, (102, 153, 255)))
+            palette = sns.color_palette("gist_rainbow", n_colors=1000)
+            color_val = palette[np.random.randint(0, 1000)]
+            self.player_color = [255*val for val in color_val]
+            #tuple(np.random.randint(1, 256, size=3))
+            self.track_color = tuple((x + y) / 2 for x, y in zip(self.player_color, (30, 30, 30)))
         else:
-            self.track_color = (102, 153, 255)
             self.player_color = (153, 0, 0)
+            self.track_color = self.player_color#tuple((x + y) / 2 for x, y in zip(self.player_color, (80, 80, 80)))#(102, 153, 255)
+
 
     def generate_random_moves(self, move_count: int):
         self.move_list = ((np.random.rand(move_count) * 6 + 1).astype(int))

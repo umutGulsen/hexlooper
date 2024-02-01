@@ -8,11 +8,11 @@ import seaborn as sns
 
 board_config = {"height": 600,
                 "width": 1000,
-                "hex_radius": 10
+                "hex_radius": 12
                 }
 
 colors = {
-    "BLACK": (0, 0, 0),
+    "BLACK": (30, 30, 30),
     "WHITE": (255, 255, 255),
     "GRAY": (200, 200, 200),
     "GREEN": (0, 153, 51),
@@ -76,16 +76,16 @@ def visualize_scores(record):
 
 
 def display_ga_champion(champ_disp_count=1):
-    move_length = 100
+    move_length = 120
     theretical_max = move_length * (move_length + 1) / 2
     print(f"Theoretical Max Score: {theretical_max}")
     best_moves, record = genetic_algorithm(initial_mutation_chance=.8,
                                            move_length=move_length,
-                                           display_interval=50,
-                                           generations=80,
-                                           pop_size=100,
-                                           mutation_chance=.04,
-                                           train_fps=2048)
+                                           display_interval=1,
+                                           generations=5,
+                                           pop_size=16,
+                                           mutation_chance=.05,
+                                           train_fps=16)
     print(f"Achineved score (% of theoretical max): %{round(100*record['champion_scores'][-1]/theretical_max,2)}")
     for _ in range(champ_disp_count):
         g = Game(player_count=1,
