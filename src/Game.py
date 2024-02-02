@@ -80,9 +80,9 @@ class Game(object):
         track_len = len(p.track)
         for i, hex_pos in enumerate(p.track):
             hex_in_track = self.hex_list[hex_pos]
-            if track_len - i < 12:
-                self.draw_hexagon(hex_in_track.center_x, hex_in_track.center_y, self.board_config["hex_radius"] * (track_len-i)/12,
-                              edge_color=self.colors["GRAY"], fill_color=p.track_color)
+            if p.consec_stalls + track_len - i < 12:
+                self.draw_hexagon(hex_in_track.center_x, hex_in_track.center_y, -1+self.board_config["hex_radius"] * (p.consec_stalls + track_len - i)/12,
+                              edge_color=self.colors["BLACK"], fill_color=p.track_color)
             else:
                 self.draw_hexagon(hex_in_track.center_x, hex_in_track.center_y,
                                   self.board_config["hex_radius"],
