@@ -5,9 +5,12 @@ import math
 from Hex import Hex
 import functools
 import copy
+import logging
 
 
 class Game(object):
+
+    logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 
     def __init__(self, player_count: int, board_config, player_starting_positions="random", random_move_count=0,
                  turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str = "default",
@@ -201,7 +204,7 @@ class Game(object):
                                                 other_p.crash_track()
                                         break
                                     else:
-                                        print(
+                                        logging.info(
                                             f"Cannot move to that hex!(is neighbor:{current_hex.is_neighbor(next_hex)}   {backtrack=}")
             if show_this_time:
                 pygame.display.flip()

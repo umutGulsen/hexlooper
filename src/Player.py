@@ -23,7 +23,6 @@ class Player():
             self.player_color = (153, 0, 0)
             self.track_color = self.player_color#tuple((x + y) / 2 for x, y in zip(self.player_color, (80, 80, 80)))#(102, 153, 255)
 
-
     def generate_random_moves(self, move_count: int):
         self.move_list = ((np.random.rand(move_count) * 6 + 1).astype(int))
         self.static_move_list = self.move_list

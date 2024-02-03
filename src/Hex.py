@@ -1,6 +1,7 @@
 import math
 from typing import Tuple
 import functools
+import logging
 
 
 class Hex:
@@ -13,6 +14,7 @@ class Hex:
         center_y (float): y-coordinate of the center of the hexagon.
         visited (bool): Flag indicating whether the hexagon has been visited.
     """
+    logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 
     def __init__(self, ix: int, r: float = None, center_x: float = None, center_y: float = None):
         """Initialize a Hex object.
@@ -71,7 +73,7 @@ class Hex:
             else:
                 code = 4
 
-        print(code)
+        logging.info(code)
 
     def generate_move_from_code(self, code: int) -> Tuple[float, float]:
         """Generate new coordinates based on the move code.
