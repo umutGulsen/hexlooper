@@ -13,7 +13,7 @@ from optuna.visualization import plot_param_importances
 from optuna.visualization import plot_optimization_history
 import logging
 
-logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 #logging.basicConfig(level=logging.WARNING)
 board_config = {"height": 600,
                 "width": 1000,
@@ -112,36 +112,42 @@ def display_ga_champion(champ_disp_count=1, move_length=100, **params):
 def objective(trial):
     move_length = 100
     params = {
-        "generations": trial.suggest_int("generations", 20, 50),
-        "pop_size": trial.suggest_int("pop_size", 1, 2),
-        "mutation_chance": trial.suggest_float("mutation_chance", .01, .20),
+        "generations": trial.suggest_int("generations", 15, 60),
+        "pop_size": trial.suggest_int("pop_size", 1, 100),
+        "mutation_chance": trial.suggest_float("mutation_chance", .01, .35),
     }
     _, trial_record = genetic_algorithm(initial_mutation_chance=.8,
                                             move_length=move_length,
-                                            display_interval=1,
-                                            train_fps=6,
+                                            display_interval=500,
+                                            train_fps=10000,
                                             **params)
     return trial_record["champion_scores"][-1] / (move_length * (move_length + 1) / 2)
 
-study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=0)
-                            )
-study.optimize(objective, n_trials=50)
-file_path = 'optuna_results/optimal_params.txt'
 
-# Open the file in write mode and write the dictionary items as key-value pairs
-with open(file_path, 'w') as file:
-    for key, value in study.best_params.items():
-        file.write(f'{key}: {value}\n')
+def run_optimization_with_optuna(n_trials: int=10):
+    study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=0)
+                                )
+    study.optimize(objective, n_trials=n_trials)
+    file_path = 'optuna_results/optimal_params.txt'
 
-plot_optimization_history(study).write_html("optuna_results/study_history.html")
+    # Open the file in write mode and write the dictionary items as key-value pairs
+    with open(file_path, 'w') as file:
+        for key, value in study.best_params.items():
+            file.write(f'{key}: {value}\n')
 
-plot_parallel_coordinate(study).write_html("optuna_results/plot_parallel_coordinate.html")
+    plot_optimization_history(study).write_html("optuna_results/study_history.html")
 
-plot_param_importances(study).write_html("optuna_results/plot_param_importances.html")
+    plot_parallel_coordinate(study).write_html("optuna_results/plot_parallel_coordinate.html")
 
-plot_param_importances(study, target=lambda t: t.duration.total_seconds(), target_name="duration").write_html("optuna_results/plot_param_duration_impact.html")
+    plot_param_importances(study).write_html("optuna_results/plot_param_importances.html")
 
-plot_contour(study).write_html("optuna_results/contour.html")
+    plot_param_importances(study, target=lambda t: t.duration.total_seconds(), target_name="duration").write_html("optuna_results/plot_param_duration_impact.html")
+
+    plot_contour(study).write_html("optuna_results/contour.html")
+
+
+run_optimization_with_optuna(
+)
 """
 
 display_ga_champion(champ_disp_count=3)

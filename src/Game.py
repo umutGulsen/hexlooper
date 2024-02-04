@@ -168,6 +168,7 @@ class Game(object):
         first = True
         while running:
             show_this_time = self.turn % display_interval == 0 or (first and show_first_frame)
+
             if show_this_time:
                 self.hex_list = self.display_game(players=self.players, highlight=False)
                 first = False
