@@ -14,11 +14,8 @@ from optuna.visualization import plot_optimization_history
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-#logging.basicConfig(level=logging.WARNING)
-board_config = {"height": 600,
-                "width": 1000,
-                "hex_radius": 12
-                }
+logging.basicConfig(level=logging.INFO)
+
 
 colors = {
     "BLACK": (30, 30, 30),
@@ -146,24 +143,29 @@ def run_optimization_with_optuna(n_trials: int=10):
     plot_contour(study).write_html("optuna_results/contour.html")
 
 
+board_config = {"height": 300,
+                "width": 1000,
+                "hex_radius": 40
+                }
+
+"""
 run_optimization_with_optuna(
 )
-"""
+
 
 display_ga_champion(champ_disp_count=3)
-
-
-g = Game(player_count=8,
+"""
+g = Game(player_count=2,
          player_starting_positions="random",
-         random_move_count=300,
+         random_move_count=1,
          board_config=board_config,
-         turn_limit=300,
+         turn_limit=5,
          move_generation_type="list",
          game_mode="",
          colors=colors,
          random_player_colors=True)
-g.run_game(fps=36, display_interval=1, wait_for_user=True)
-"""
+g.run_game(fps=4, display_interval=1, wait_for_user=True)
+
 #pygame.quit()
 # print(g.find_winner())
 sys.exit()

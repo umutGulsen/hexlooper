@@ -10,7 +10,8 @@ import logging
 
 class Game(object):
 
-    logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG)
 
     def __init__(self, player_count: int, board_config, player_starting_positions="random", random_move_count=0,
                  turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str = "default",
@@ -33,6 +34,7 @@ class Game(object):
         self.turn_limit = turn_limit
         self.game_mode = game_mode
         self.hex_list = []
+        self.base_game_state = None
         self.board_config = board_config
         self.colors = colors
         self.screen = pygame.display.set_mode((self.board_config["width"], self.board_config["height"]))
@@ -50,7 +52,7 @@ class Game(object):
             angle += 60
 
         pygame.draw.polygon(self.screen, fill_color, points, 0)
-        pygame.draw.polygon(self.screen, edge_color, points, max(1,int(r/5)))
+        pygame.draw.polygon(self.screen, edge_color, points, max(1, int(r/5)))
 
     def draw_hexgrid(self, height, width, hex_radius) -> list[Hex]:
         row_step = int((3 ** .5) * hex_radius * (2 / 4))
@@ -149,16 +151,30 @@ class Game(object):
             p.move(next_hex.ix)
             # time.sleep(.001)
             # current_hex.find_move_code(next_hex)
-            for other_p in self.players:
-                if self.game_mode != "coexist" and p.id != other_p.id and any(
-                        next_hex.ix == hex_pos for hex_pos in other_p.track):
-                    other_p.crash_track()
-                    break
-            p.consec_stalls = 0
+            if self.base_game_state[3, next_hex.ix] == 1:
+                for other_p in self.players:
+                    if self.game_mode != "coexist" and p.id != other_p.id and any(
+                            next_hex.ix == hex_pos for hex_pos in other_p.track):
+                        other_p.crash_track()
+                        break
+                p.consec_stalls = 0
         elif neighbored and backtrack:
             p.consec_stalls += 1
         if p.consec_stalls > 20:
             p.crash_track()
+
+    def update_base_game_state(self):
+        self.base_game_state = np.zeros((len(self.hex_list), 7))
+        for p in self.players:
+            self.base_game_state[p.nest, 1] = 1
+            self.base_game_state[p.pos, 2] = 1
+            self.base_game_state[p.track, 3] = 1
+        self.base_game_state[:, 0] = (1 - np.sum(self.base_game_state[:, [1, 2, 3]], axis=1)).clip(min=0)
+        logging.debug(self.base_game_state)
+        logging.debug(f"{np.sum(self.base_game_state[:,0])} hexes are empty")
+        logging.debug(f"{np.sum(self.base_game_state[:, 1])} hexes have nests")
+        logging.debug(f"{np.sum(self.base_game_state[:, 2])} hexes have players")
+        logging.debug(f"{np.sum(self.base_game_state[:, 3])} hexes are tracks")
 
     def run_game(self, fps=64, display_interval: int = 1, wait_for_user=False, show_first_frame=True):
         pygame.init()
@@ -166,17 +182,22 @@ class Game(object):
         pygame.display.set_caption("Hexlooper")
         clock = pygame.time.Clock()
         first = True
+
         while running:
             show_this_time = self.turn % display_interval == 0 or (first and show_first_frame)
 
+
             if show_this_time:
                 self.hex_list = self.display_game(players=self.players, highlight=False)
+                if first:
+                    self.update_base_game_state()
                 first = False
 
             for p in self.players:
                 if (self.turn_limit is None or self.turn < self.turn_limit) and (
                         next_move := p.generate_move(generation_type=self.move_generation_type)) is not None:
                     self.execute_move(next_move, p)
+                    self.update_base_game_state()
                 else:
                     if not wait_for_user:
                         if self.turn_limit is None or self.turn < self.turn_limit:
@@ -198,11 +219,13 @@ class Game(object):
                                     if current_hex.is_neighbor(next_hex) and (
                                             not backtrack or next_hex.ix == p_.nest) and not occupied:
                                         p_.move(next_hex.ix)
+                                        self.update_base_game_state()
                                         current_hex.find_move_code(next_hex)
-                                        for other_p in self.players:
-                                            if p_.id != other_p.id and any(
-                                                    next_hex.ix == hex_pos for hex_pos in other_p.track):
-                                                other_p.crash_track()
+                                        if self.base_game_state[next_hex.ix, 3] == 1:
+                                            for other_p in self.players:
+                                                if p_.id != other_p.id and any(
+                                                        next_hex.ix == hex_pos for hex_pos in other_p.track):
+                                                    other_p.crash_track()
                                         break
                                     else:
                                         logging.info(
