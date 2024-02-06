@@ -133,33 +133,33 @@ class Game(object):
         return None
 
     def execute_move(self, move: int, p):
+        change_happened = False
         current_hex = self.hex_list[p.pos]
         new_x, new_y = current_hex.generate_move_from_code(move)
         next_hex = self.find_closest_hex(new_x, new_y)
         if next_hex is not None:
-            track_set = set(p.track)
-            backtrack = any(next_hex.ix == hex_pos for hex_pos in track_set) and (next_hex.ix != p.nest)
-            occupied = self.game_mode != "coexist" and any(next_hex.ix == other_p.pos for other_p in self.players)
+            backtrack = p.player_game_state[6, next_hex.ix] - p.player_game_state[4, next_hex.ix]
+            occupied = self.game_mode != "coexist" and (p.player_game_state[1, next_hex.ix] - p.player_game_state[4, next_hex.ix])
             neighbored = current_hex.is_neighbor(next_hex)
         else:
             neighbored = False
             backtrack = False
             occupied = False
-        if neighbored and not backtrack and not occupied or False:
+        if neighbored and not backtrack and not occupied:
             p.move(next_hex.ix)
-            # time.sleep(.001)
+            change_happened = True
             # current_hex.find_move_code(next_hex)
             if self.base_game_state[3, next_hex.ix] == 1:
                 for other_p in self.players:
-                    if self.game_mode != "coexist" and p.id != other_p.id and any(
-                            next_hex.ix == hex_pos for hex_pos in other_p.track):
+                    if self.game_mode != "coexist" and other_p.player_game_state[6, next_hex.ix]:
                         other_p.crash_track()
                         break
-                p.consec_stalls = 0
         elif neighbored and backtrack:
             p.consec_stalls += 1
-        if p.consec_stalls > 20:
+        if p.consec_stalls > 20: #TODO parametrize this
             p.crash_track()
+            change_happened = True
+        return change_happened
 
     def update_base_game_state(self):
         self.base_game_state = np.zeros((len(self.hex_list), 7))
@@ -187,7 +187,6 @@ class Game(object):
         while running:
             show_this_time = self.turn % display_interval == 0 or (first and show_first_frame)
 
-
             if show_this_time:
                 self.hex_list = self.display_game(players=self.players, highlight=False)
                 if first:
@@ -197,8 +196,9 @@ class Game(object):
             for p in self.players:
                 if (self.turn_limit is None or self.turn < self.turn_limit) and (
                         next_move := p.generate_move(generation_type=self.move_generation_type)) is not None:
-                    self.execute_move(next_move, p)
-                    self.update_base_game_state()
+                    change_happened = self.execute_move(next_move, p)
+                    if change_happened:
+                        self.update_base_game_state()
                 else:
                     if not wait_for_user:
                         if self.turn_limit is None or self.turn < self.turn_limit:

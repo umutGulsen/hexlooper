@@ -52,6 +52,7 @@ class Player():
         else:
             self.track_score += len(self.track)
             self.track.append(next_pos)
+        self.consec_stalls = 0
 
     def crash_track(self):
         self.nest = self.pos
