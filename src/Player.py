@@ -1,6 +1,7 @@
 import numpy as np
 import seaborn as sns
-
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 class Player():
     def __init__(self, id, pos, random_color=False):
@@ -13,6 +14,7 @@ class Player():
         self.consec_stalls = 0
         self.move_list = []
         self.static_move_list = []
+        self.player_game_state = None
         if random_color:
             palette = sns.color_palette("gist_rainbow", n_colors=1000)
             color_val = palette[np.random.randint(0, 1000)]
@@ -65,3 +67,24 @@ class Player():
             return m
         if generation_type == "fixed":
             return int(1)
+
+    def update_game_state(self, base_game_state):
+        self.player_game_state = base_game_state.copy()
+        self.player_game_state[self.nest, 1] = 0
+        self.player_game_state[self.pos, 2] = 0
+        self.player_game_state[self.track, 3] = 0
+
+        self.player_game_state[self.nest, 1+3] = 1
+        self.player_game_state[self.pos, 2+3] = 1
+        self.player_game_state[self.track, 3+3] = 1
+
+        logging.debug(self.id)
+        logging.debug(self.player_game_state)
+        logging.debug(f"{np.sum(self.player_game_state[:,0])} hexes are empty")
+        logging.debug(f"{np.sum(self.player_game_state[:, 1])} hexes have nests")
+        logging.debug(f"{np.sum(self.player_game_state[:, 2])} hexes have players")
+        logging.debug(f"{np.sum(self.player_game_state[:, 3])} hexes are tracks")
+
+        logging.debug(f"{np.sum(self.player_game_state[:, 4])} hexes are my nests")
+        logging.debug(f"{np.sum(self.player_game_state[:, 5])} hexes my players")
+        logging.debug(f"{np.sum(self.player_game_state[:, 6])} hexes my tracks")

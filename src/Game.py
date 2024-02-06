@@ -6,12 +6,10 @@ from Hex import Hex
 import functools
 import copy
 import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class Game(object):
-
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-    logging.basicConfig(level=logging.DEBUG)
 
     def __init__(self, player_count: int, board_config, player_starting_positions="random", random_move_count=0,
                  turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str = "default",
@@ -170,6 +168,9 @@ class Game(object):
             self.base_game_state[p.pos, 2] = 1
             self.base_game_state[p.track, 3] = 1
         self.base_game_state[:, 0] = (1 - np.sum(self.base_game_state[:, [1, 2, 3]], axis=1)).clip(min=0)
+        for p in self.players:
+            p.update_game_state(self.base_game_state)
+
         logging.debug(self.base_game_state)
         logging.debug(f"{np.sum(self.base_game_state[:,0])} hexes are empty")
         logging.debug(f"{np.sum(self.base_game_state[:, 1])} hexes have nests")
