@@ -4,7 +4,6 @@ import pygame
 import math
 from Hex import Hex
 import functools
-import copy
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -83,12 +82,8 @@ class Game(object):
         track_len = len(p.track)
         for i, hex_pos in enumerate(p.track):
             hex_in_track = self.hex_list[hex_pos]
-            if p.consec_stalls + track_len - i < 12:
-                self.draw_hexagon(hex_in_track.center_x, hex_in_track.center_y, -1+self.board_config["hex_radius"] * (p.consec_stalls + track_len - i)/12,
-                              edge_color=self.colors["BLACK"], fill_color=p.track_color)
-            else:
-                self.draw_hexagon(hex_in_track.center_x, hex_in_track.center_y,
-                                  self.board_config["hex_radius"],
+            self.draw_hexagon(hex_in_track.center_x, hex_in_track.center_y,
+                                  self.board_config["hex_radius"]/3,
                                   edge_color=self.colors["GRAY"], fill_color=p.track_color)
 
         self.draw_hexagon(self.hex_list[p.nest].center_x, self.hex_list[p.nest].center_y,
@@ -138,20 +133,18 @@ class Game(object):
         new_x, new_y = current_hex.generate_move_from_code(move)
         next_hex = self.find_closest_hex(new_x, new_y)
         if next_hex is not None:
-            backtrack = p.player_game_state[6, next_hex.ix] - p.player_game_state[4, next_hex.ix]
-            occupied = self.game_mode != "coexist" and (p.player_game_state[1, next_hex.ix] - p.player_game_state[4, next_hex.ix])
+            backtrack = p.player_game_state[next_hex.ix, 6] - p.player_game_state[next_hex.ix, 4]
+            occupied = self.game_mode != "coexist" and (self.base_game_state[next_hex.ix, 2])
             neighbored = current_hex.is_neighbor(next_hex)
         else:
-            neighbored = False
-            backtrack = False
-            occupied = False
+            neighbored, backtrack, occupied = False, False, False
         if neighbored and not backtrack and not occupied:
             p.move(next_hex.ix)
             change_happened = True
             # current_hex.find_move_code(next_hex)
-            if self.base_game_state[3, next_hex.ix] == 1:
+            if self.game_mode != "coexist" and self.base_game_state[next_hex.ix, 3] == 1:
                 for other_p in self.players:
-                    if self.game_mode != "coexist" and other_p.player_game_state[6, next_hex.ix]:
+                    if other_p.player_game_state[next_hex.ix, 6]:
                         other_p.crash_track()
                         break
         elif neighbored and backtrack:
@@ -194,14 +187,14 @@ class Game(object):
                 first = False
 
             for p in self.players:
-                if (self.turn_limit is None or self.turn < self.turn_limit) and (
+                if (self.turn_limit is None or self.turn >= self.turn_limit) and (
                         next_move := p.generate_move(generation_type=self.move_generation_type)) is not None:
                     change_happened = self.execute_move(next_move, p)
                     if change_happened:
                         self.update_base_game_state()
                 else:
                     if not wait_for_user:
-                        if self.turn_limit is None or self.turn < self.turn_limit:
+                        if self.turn_limit is None or self.turn >= self.turn_limit:
                             running = False
                         # pygame.quit()
                     else:
@@ -243,10 +236,8 @@ class Game(object):
             if p.score > max_score:
                 max_score = p.score
                 champion = p
-
         return champion, max_score
 
     def mutate_moves(self, move_list, mut_chance):
-        fix_move_list = copy.deepcopy(move_list)
         for p in self.players:
-            p.mutate_random_moves(fix_move_list, per_move_mutation_chance=mut_chance)
+            p.mutate_random_moves(move_list, per_move_mutation_chance=mut_chance)

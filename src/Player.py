@@ -1,7 +1,7 @@
 import numpy as np
 import seaborn as sns
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 class Player():
     def __init__(self, id, pos, random_color=False):
@@ -16,8 +16,8 @@ class Player():
         self.static_move_list = []
         self.player_game_state = None
         if random_color:
-            palette = sns.color_palette("gist_rainbow", n_colors=1000)
-            color_val = palette[np.random.randint(0, 1000)]
+            palette = sns.color_palette("Spectral", n_colors=200)
+            color_val = palette[np.random.randint(0, 200)]
             self.player_color = [255*val for val in color_val]
             #tuple(np.random.randint(1, 256, size=3))
             self.track_color = tuple((x + y) / 2 for x, y in zip(self.player_color, (30, 30, 30)))
@@ -26,7 +26,7 @@ class Player():
             self.track_color = self.player_color#tuple((x + y) / 2 for x, y in zip(self.player_color, (80, 80, 80)))#(102, 153, 255)
 
     def generate_random_moves(self, move_count: int):
-        self.move_list = ((np.random.rand(move_count) * 6 + 1).astype(int))
+        self.move_list = ((np.random.rand(move_count) * 6).astype(int))
         self.static_move_list = self.move_list
 
     def mutate_random_moves(self, move_list, per_move_mutation_chance: float = .001):
