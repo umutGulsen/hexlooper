@@ -138,17 +138,17 @@ class Game(object):
             neighbored = current_hex.is_neighbor(next_hex)
         else:
             neighbored, backtrack, occupied = False, False, False
-        if neighbored and not backtrack and not occupied:
-            p.move(next_hex.ix)
-            change_happened = True
-            # current_hex.find_move_code(next_hex)
-            if self.game_mode != "coexist" and self.base_game_state[next_hex.ix, 3] == 1:
-                for other_p in self.players:
-                    if other_p.player_game_state[next_hex.ix, 6]:
-                        other_p.crash_track()
-                        break
-        elif neighbored and backtrack:
-            p.consec_stalls += 1
+        if neighbored:
+            if not backtrack and not occupied:
+                p.move(next_hex.ix)
+                change_happened = True
+                if self.game_mode != "coexist" and self.base_game_state[next_hex.ix, 3]:
+                    for other_p in self.players:
+                        if other_p.player_game_state[next_hex.ix, 6]:
+                            other_p.crash_track()
+                            break
+            elif backtrack:
+                p.consec_stalls += 1
         if p.consec_stalls > 20: #TODO parametrize this
             p.crash_track()
             change_happened = True
@@ -179,7 +179,6 @@ class Game(object):
 
         while running:
             show_this_time = self.turn % display_interval == 0 or (first and show_first_frame)
-
             if show_this_time:
                 self.hex_list = self.display_game(players=self.players, highlight=False)
                 if first:
@@ -187,14 +186,16 @@ class Game(object):
                 first = False
 
             for p in self.players:
-                if (self.turn_limit is None or self.turn >= self.turn_limit) and (
-                        next_move := p.generate_move(generation_type=self.move_generation_type)) is not None:
+                end_of_turn = (self.turn_limit is not None and self.turn < self.turn_limit)
+                next_move = p.generate_move(generation_type=self.move_generation_type)
+                move_is_feasible = next_move is not None
+                if not end_of_turn and move_is_feasible:
                     change_happened = self.execute_move(next_move, p)
                     if change_happened:
                         self.update_base_game_state()
                 else:
                     if not wait_for_user:
-                        if self.turn_limit is None or self.turn >= self.turn_limit:
+                        if end_of_turn:
                             running = False
                         # pygame.quit()
                     else:
