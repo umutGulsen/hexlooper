@@ -1,7 +1,7 @@
 import numpy as np
 import seaborn as sns
 import logging
-logging.basicConfig(level=logging.INFO)
+
 
 class Player():
     def __init__(self, id, pos, random_color=False):
@@ -13,17 +13,17 @@ class Player():
         self.track_score = 0
         self.consec_stalls = 0
         self.move_list = []
+        self.action_matrix = None
         self.static_move_list = []
         self.player_game_state = None
         if random_color:
             palette = sns.color_palette("Spectral", n_colors=200)
             color_val = palette[np.random.randint(0, 200)]
             self.player_color = [255*val for val in color_val]
-            #tuple(np.random.randint(1, 256, size=3))
             self.track_color = tuple((x + y) / 2 for x, y in zip(self.player_color, (30, 30, 30)))
         else:
             self.player_color = (153, 0, 0)
-            self.track_color = self.player_color#tuple((x + y) / 2 for x, y in zip(self.player_color, (80, 80, 80)))#(102, 153, 255)
+            self.track_color = self.player_color
 
     def generate_random_moves(self, move_count: int):
         self.move_list = ((np.random.rand(move_count) * 6).astype(int))
@@ -39,6 +39,9 @@ class Player():
                 new_move_list.append(move)
         self.move_list = new_move_list
         self.static_move_list = new_move_list
+
+    def initialize_matrix(self, dims: dict):
+        pass
 
     def complete_loop(self):
         self.track = [self.nest]
@@ -66,7 +69,11 @@ class Player():
             m = self.move_list[-1]
             self.move_list = self.move_list[:-1]
             return m
-        if generation_type == "fixed":
+        elif generation_type == "matrix":
+            #TODO multiply w the game state to generate a move
+            pass
+
+        elif generation_type == "fixed":
             return int(1)
 
     def update_game_state(self, base_game_state):

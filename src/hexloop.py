@@ -157,23 +157,24 @@ params = {
     "pop_size": 15,
     "mutation_chance": .03,
 }
+"""
 display_ga_champion(champ_disp_count=9, **params)
 
-"""
+
 run_optimization_with_optuna(
 )
-
-g = Game(player_count=2,
+"""
+g = Game(player_count=12,
          player_starting_positions="random",
-         random_move_count=1,
+         random_move_count=1000,
          board_config=board_config,
          turn_limit=5,
          move_generation_type="list",
          game_mode="",
          colors=colors,
          random_player_colors=True)
-g.run_game(fps=4, display_interval=1, wait_for_user=True)
-"""
+g.run_game(fps=40, display_interval=1, wait_for_user=True)
+
 # pygame.quit()
 # print(g.find_winner())
 sys.exit()

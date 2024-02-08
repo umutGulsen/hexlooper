@@ -5,6 +5,7 @@ import math
 from Hex import Hex
 import functools
 import logging
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
@@ -49,7 +50,7 @@ class Game(object):
             angle += 60
 
         pygame.draw.polygon(self.screen, fill_color, points, 0)
-        pygame.draw.polygon(self.screen, edge_color, points, max(1, int(r/5)))
+        pygame.draw.polygon(self.screen, edge_color, points, max(1, int(r / 5)))
 
     def draw_hexgrid(self, height, width, hex_radius) -> list[Hex]:
         row_step = int((3 ** .5) * hex_radius * (2 / 4))
@@ -83,14 +84,16 @@ class Game(object):
         for i, hex_pos in enumerate(p.track):
             hex_in_track = self.hex_list[hex_pos]
             self.draw_hexagon(hex_in_track.center_x, hex_in_track.center_y,
-                                  self.board_config["hex_radius"]/3,
-                                  edge_color=self.colors["GRAY"], fill_color=p.track_color)
+                              self.board_config["hex_radius"] / 3,
+                              edge_color=self.colors["GRAY"], fill_color=p.track_color)
 
         self.draw_hexagon(self.hex_list[p.nest].center_x, self.hex_list[p.nest].center_y,
-                          self.board_config["hex_radius"], edge_color=self.colors["GRAY"], fill_color=self.colors["BLACK"])
+                          self.board_config["hex_radius"], edge_color=self.colors["GRAY"],
+                          fill_color=self.colors["BLACK"])
 
         self.draw_hexagon(self.hex_list[p.nest].center_x, self.hex_list[p.nest].center_y,
-                          self.board_config["hex_radius"] / 2, edge_color=self.colors["GRAY"], fill_color=self.colors["GREEN"])
+                          self.board_config["hex_radius"] / 2, edge_color=self.colors["GRAY"],
+                          fill_color=self.colors["GREEN"])
 
         self.draw_hexagon(self.hex_list[p.pos].center_x, self.hex_list[p.pos].center_y, self.board_config["hex_radius"],
                           edge_color=self.colors["GRAY"], fill_color=p.player_color)
@@ -149,7 +152,7 @@ class Game(object):
                             break
             elif backtrack:
                 p.consec_stalls += 1
-        if p.consec_stalls > 20: #TODO parametrize this
+        if p.consec_stalls > 20:  # TODO parametrize this
             p.crash_track()
             change_happened = True
         return change_happened
@@ -165,7 +168,7 @@ class Game(object):
             p.update_game_state(self.base_game_state)
 
         logging.debug(self.base_game_state)
-        logging.debug(f"{np.sum(self.base_game_state[:,0])} hexes are empty")
+        logging.debug(f"{np.sum(self.base_game_state[:, 0])} hexes are empty")
         logging.debug(f"{np.sum(self.base_game_state[:, 1])} hexes have nests")
         logging.debug(f"{np.sum(self.base_game_state[:, 2])} hexes have players")
         logging.debug(f"{np.sum(self.base_game_state[:, 3])} hexes are tracks")
@@ -183,6 +186,12 @@ class Game(object):
                 self.hex_list = self.display_game(players=self.players, highlight=False)
                 if first:
                     self.update_base_game_state()
+                    if self.move_generation_type == "matrix":
+                        for p in self.players:
+                            dims = {"n_hexes": len(self.hex_list),
+                                    "hex_state": 7,
+                                    "action_count": 6}
+                            p.initialize_matrix(dims)
                 first = False
 
             for p in self.players:
@@ -197,7 +206,6 @@ class Game(object):
                     if not wait_for_user:
                         if end_of_turn:
                             running = False
-                        # pygame.quit()
                     else:
                         for event in pygame.event.get():
                             if event.type == pygame.QUIT:
