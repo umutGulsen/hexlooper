@@ -15,7 +15,7 @@ from optuna.visualization import plot_optimization_history
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 colors = {
     "BLACK": (45, 45, 45),
@@ -37,6 +37,10 @@ def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_
     generations = params.get("generations")
     pop_size = params.get("pop_size")
     mutation_chance = params.get("mutation_chance")
+
+    stagnancy_length = params.get("stagnancy_length")
+    stagnancy_extra_mutation_chance = params.get("stagnancy_extra_mutation_chance")
+
     record = {}
     generation_scores = np.zeros((generations, pop_size))
     champion_scores = np.zeros(generations)
@@ -58,7 +62,16 @@ def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_
         if gen == 0:
             g.mutate_moves(champ_moves, mut_chance=initial_mutation_chance)
         else:
-            g.mutate_moves(champ_moves, mut_chance=mutation_chance)
+            enough_gens_to_measure_stagnancy = gen >= stagnancy_length
+            if enough_gens_to_measure_stagnancy:
+                scores_stagnant = champion_scores[gen-stagnancy_length] == champion_scores[gen-1]
+                if scores_stagnant:
+                    g.mutate_moves(champ_moves, mut_chance=mutation_chance + stagnancy_extra_mutation_chance)
+                    logging.info(f"Stagnancy detected in Gen {gen}!")
+                else:
+                    g.mutate_moves(champ_moves, mut_chance=mutation_chance)
+            else:
+                g.mutate_moves(champ_moves, mut_chance=mutation_chance)
 
         g.run_game(fps=train_fps, display_interval=display_interval)
         generation_scores[gen, :] = [p.score for p in g.players]
@@ -83,18 +96,18 @@ def visualize_scores(record):
     plt.show()
 
 
-def display_ga_champion(champ_disp_count=1, move_length=100, **params):
+def display_ga_champion(champ_disp_count=1, move_length: int = 100, **params):
     theoretical_max = move_length * (move_length + 1) / 2
     logging.info(f"Theoretical Max Score: {theoretical_max}")
     best_moves, record = genetic_algorithm(initial_mutation_chance=.8,
                                            move_length=move_length,
-                                           display_interval=10,
-                                           train_fps=4096,
+                                           display_interval=200,
+                                           train_fps=40960,
                                            **params)
     logging.info(
         f"Achieved score (% of theoretical max): %{round(100 * record['champion_scores'][-1] / theoretical_max, 2)}")
-    #best_moves=[_%2 for _ in range(5)]
-    #print(best_moves)
+    # best_moves=[_%2 for _ in range(5)]
+    # print(best_moves)
     for _ in range(champ_disp_count):
         g = Game(player_count=1,
                  player_starting_positions="fixed",
@@ -105,17 +118,19 @@ def display_ga_champion(champ_disp_count=1, move_length=100, **params):
 
         g.mutate_moves(best_moves, mut_chance=0)
         g.run_game(fps=5, display_interval=1, wait_for_user=False)
-        #time.sleep(2)
+        # time.sleep(2)
     pygame.quit()
     visualize_scores(record)
 
 
 def objective(trial):
-    move_length = 100
+    move_length = 200
     params = {
         "generations": trial.suggest_int("generations", 15, 60),
         "pop_size": trial.suggest_int("pop_size", 1, 100),
         "mutation_chance": trial.suggest_float("mutation_chance", .01, .35),
+        "stagnancy_length": trial.suggest_int("stagnancy_length", 1, 10),
+        "stagnancy_extra_mutation_chance": trial.suggest_float("stagnancy_extra_mutation_chance", .01, .5)
     }
     _, trial_record = genetic_algorithm(initial_mutation_chance=.8,
                                         move_length=move_length,
@@ -125,7 +140,7 @@ def objective(trial):
     return trial_record["champion_scores"][-1] / (move_length * (move_length + 1) / 2)
 
 
-def run_optimization_with_optuna(n_trials: int = 10):
+def run_optimization_with_optuna(n_trials: int = 20):
     study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=0)
                                 )
     study.optimize(objective, n_trials=n_trials)
@@ -153,14 +168,16 @@ board_config = {"height": 600,
                 "hex_radius": 12
                 }
 params = {
-    "generations": 10,
-    "pop_size": 15,
+    "generations": 70,
+    "pop_size": 10,
     "mutation_chance": .03,
+    "stagnancy_length": 3,
+    "stagnancy_extra_mutation_chance": .1
 }
 """
-display_ga_champion(champ_disp_count=9, **params)
+display_ga_champion(champ_disp_count=2, move_length=100, **params)
 
-
+"""
 run_optimization_with_optuna(
 )
 """
@@ -174,7 +191,7 @@ g = Game(player_count=12,
          colors=colors,
          random_player_colors=True)
 g.run_game(fps=40, display_interval=1, wait_for_user=True)
-
+"""
 # pygame.quit()
 # print(g.find_winner())
 sys.exit()

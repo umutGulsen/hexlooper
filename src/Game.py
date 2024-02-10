@@ -29,7 +29,7 @@ class Game(object):
             self.players.append(new_player)
 
         self.turn = 0
-        self.turn_limit = turn_limit
+        self.turn_limit = turn_limit if move_generation_type != "list" else random_move_count
         self.game_mode = game_mode
         self.hex_list = []
         self.base_game_state = None
@@ -195,7 +195,7 @@ class Game(object):
                 first = False
 
             for p in self.players:
-                end_of_turn = (self.turn_limit is not None and self.turn < self.turn_limit)
+                end_of_turn = (self.turn_limit is not None and self.turn >= self.turn_limit)
                 next_move = p.generate_move(generation_type=self.move_generation_type)
                 move_is_feasible = next_move is not None
                 if not end_of_turn and move_is_feasible:
