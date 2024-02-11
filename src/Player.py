@@ -1,6 +1,7 @@
 import numpy as np
 import seaborn as sns
 import logging
+from Network import Network
 
 
 class Player():
@@ -13,7 +14,7 @@ class Player():
         self.track_score = 0
         self.consec_stalls = 0
         self.move_list = []
-        self.action_matrix = None
+        self.network = None
         self.static_move_list = []
         self.player_game_state = None
         if random_color:
@@ -40,8 +41,11 @@ class Player():
         self.move_list = new_move_list
         self.static_move_list = new_move_list
 
-    def initialize_matrix(self, dims: dict):
-        pass
+    def initialize_network(self, dims: dict, layer_sizes=[1]):
+        input_size = dims["n_hexes"] * dims["hex_state"]
+        layer_sizes.append(dims["action_count"])
+        self.network = Network(layer_sizes, input_size, activator="relu")
+        self.network.randomly_initialize_params()
 
     def complete_loop(self):
         self.track = [self.nest]
@@ -62,16 +66,23 @@ class Player():
         self.track = [self.nest]
         self.track_score = 0
 
+    def generate_move_from_fixed_list(self):
+        if len(self.move_list) == 0:
+            return None
+        m = self.move_list[-1]
+        self.move_list = self.move_list[:-1]
+        return m
+
+    def generate_move_from_network(self, x):
+        output = self.network.forward_prop(x)
+        logging.debug(f"{output=}")
+        return np.argmax(output)
+
     def generate_move(self, generation_type: str):
         if generation_type == "list":
-            if len(self.move_list) == 0:
-                return None
-            m = self.move_list[-1]
-            self.move_list = self.move_list[:-1]
-            return m
-        elif generation_type == "matrix":
-            #TODO multiply w the game state to generate a move
-            pass
+            return self.generate_move_from_fixed_list()
+        elif generation_type == "network":
+            return self.generate_move_from_network(x=self.player_game_state.reshape(self.player_game_state.shape[0]*self.player_game_state.shape[1], 1))
 
         elif generation_type == "fixed":
             return int(1)
@@ -86,8 +97,8 @@ class Player():
         self.player_game_state[self.pos, 2+3] = 1
         self.player_game_state[self.track, 3+3] = 1
 
-        logging.debug(self.id)
-        logging.debug(self.player_game_state)
+        #logging.debug(self.id)
+        #logging.debug(self.player_game_state)
         logging.debug(f"{np.sum(self.player_game_state[:,0])} hexes are empty")
         logging.debug(f"{np.sum(self.player_game_state[:, 1])} hexes have nests")
         logging.debug(f"{np.sum(self.player_game_state[:, 2])} hexes have players")

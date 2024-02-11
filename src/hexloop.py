@@ -14,8 +14,8 @@ from optuna.visualization import plot_param_importances
 from optuna.visualization import plot_optimization_history
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logging.basicConfig(level=logging.WARNING)
+#logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO)
 
 colors = {
     "BLACK": (45, 45, 45),
@@ -124,13 +124,15 @@ def display_ga_champion(champ_disp_count=1, move_length: int = 100, **params):
 
 
 def objective(trial):
-    move_length = 200
+    move_length = 50
     params = {
-        "generations": trial.suggest_int("generations", 15, 60),
-        "pop_size": trial.suggest_int("pop_size", 1, 100),
+        #"generations": trial.suggest_int("generations", 15, 40),
+        #"pop_size": trial.suggest_int("pop_size", 1, 40),
+        "generations": 40,
+        "pop_size": 40,
         "mutation_chance": trial.suggest_float("mutation_chance", .01, .35),
         "stagnancy_length": trial.suggest_int("stagnancy_length", 1, 10),
-        "stagnancy_extra_mutation_chance": trial.suggest_float("stagnancy_extra_mutation_chance", .01, .5)
+        "stagnancy_extra_mutation_chance": trial.suggest_float("stagnancy_extra_mutation_chance", .01, .7)
     }
     _, trial_record = genetic_algorithm(initial_mutation_chance=.8,
                                         move_length=move_length,
@@ -165,32 +167,34 @@ def run_optimization_with_optuna(n_trials: int = 20):
 
 board_config = {"height": 600,
                 "width": 1000,
-                "hex_radius": 12
+                "hex_radius": 24
                 }
 params = {
     "generations": 70,
     "pop_size": 10,
-    "mutation_chance": .03,
-    "stagnancy_length": 3,
-    "stagnancy_extra_mutation_chance": .1
+    "mutation_chance": .017,
+    "stagnancy_length": 2,
+    "stagnancy_extra_mutation_chance": .02
 }
 """
 display_ga_champion(champ_disp_count=2, move_length=100, **params)
 
-"""
+
 run_optimization_with_optuna(
-)
-"""
-g = Game(player_count=12,
+)"""
+
+g = Game(player_count=1,
          player_starting_positions="random",
-         random_move_count=1000,
+         random_move_count=0,
          board_config=board_config,
-         turn_limit=5,
-         move_generation_type="list",
+         turn_limit=10,
+         move_generation_type="network",
          game_mode="",
          colors=colors,
-         random_player_colors=True)
-g.run_game(fps=40, display_interval=1, wait_for_user=True)
+         random_player_colors=True,
+         layer_sizes=[4,4])
+g.run_game(fps=1, display_interval=1, wait_for_user=False)
+"""
 """
 # pygame.quit()
 # print(g.find_winner())

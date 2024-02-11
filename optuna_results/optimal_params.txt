@@ -1,3 +1,3 @@
-generations: 33
-pop_size: 2
-mutation_chance: 0.19309592449519558
+mutation_chance: 0.016913720352476375
+stagnancy_length: 2
+stagnancy_extra_mutation_chance: 0.020176729035797453

@@ -6,14 +6,11 @@ from Hex import Hex
 import functools
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-
 class Game(object):
 
     def __init__(self, player_count: int, board_config, player_starting_positions="random", random_move_count=0,
                  turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str = "default",
-                 random_player_colors=False):
+                 random_player_colors=False, layer_sizes=[1]):
         if colors is None:
             colors = {}
         row_step = int((3 ** .5) * board_config["hex_radius"] * (2 / 4))
@@ -26,6 +23,8 @@ class Game(object):
             new_player = Player(id=i, pos=pos, random_color=random_player_colors)
             if self.move_generation_type == "list":
                 new_player.generate_random_moves(random_move_count)
+            else:
+                self.layer_sizes = layer_sizes
             self.players.append(new_player)
 
         self.turn = 0
@@ -167,11 +166,11 @@ class Game(object):
         for p in self.players:
             p.update_game_state(self.base_game_state)
 
-        logging.debug(self.base_game_state)
-        logging.debug(f"{np.sum(self.base_game_state[:, 0])} hexes are empty")
-        logging.debug(f"{np.sum(self.base_game_state[:, 1])} hexes have nests")
-        logging.debug(f"{np.sum(self.base_game_state[:, 2])} hexes have players")
-        logging.debug(f"{np.sum(self.base_game_state[:, 3])} hexes are tracks")
+        #logging.debug(self.base_game_state)
+        #logging.debug(f"{np.sum(self.base_game_state[:, 0])} hexes are empty")
+        #logging.debug(f"{np.sum(self.base_game_state[:, 1])} hexes have nests")
+        #logging.debug(f"{np.sum(self.base_game_state[:, 2])} hexes have players")
+        #ogging.debug(f"{np.sum(self.base_game_state[:, 3])} hexes are tracks")
 
     def run_game(self, fps=64, display_interval: int = 1, wait_for_user=False, show_first_frame=True):
         pygame.init()
@@ -186,12 +185,12 @@ class Game(object):
                 self.hex_list = self.display_game(players=self.players, highlight=False)
                 if first:
                     self.update_base_game_state()
-                    if self.move_generation_type == "matrix":
+                    if self.move_generation_type == "network":
                         for p in self.players:
                             dims = {"n_hexes": len(self.hex_list),
                                     "hex_state": 7,
                                     "action_count": 6}
-                            p.initialize_matrix(dims)
+                            p.initialize_network(dims, self.layer_sizes)
                 first = False
 
             for p in self.players:
