@@ -2,7 +2,7 @@ import numpy as np
 import seaborn as sns
 import logging
 from Network import Network
-
+from utils import distance_between_hexes
 
 class Player:
     def __init__(self, player_id, pos, random_color=False):
@@ -10,6 +10,7 @@ class Player:
         self.pos = pos
         self.nest = pos
         self.track = [pos]
+        self.reward = 0
         self.score = 0
         self.track_score = 0
         self.consec_stalls = 0
@@ -56,7 +57,7 @@ class Player:
         self.score += self.track_score
         self.track_score = 0
 
-    def move(self, next_pos):
+    def move(self, next_pos, hex_list):
         self.pos = next_pos
         if next_pos == self.nest:
             self.complete_loop()
@@ -64,11 +65,15 @@ class Player:
             self.track_score += len(self.track)
             self.track.append(next_pos)
         self.consec_stalls = 0
+        self.reward = self.score
+        if not self.pos == self.nest:
+            self.reward += .000001 * hex_list[self.pos].r * self.track_score / distance_between_hexes(hex_list[self.pos], hex_list[self.nest])
 
     def crash_track(self):
         self.nest = self.pos
         self.track = [self.nest]
         self.track_score = 0
+        self.reward /= 2
 
     def generate_move_from_fixed_list(self):
         if len(self.move_list) == 0:

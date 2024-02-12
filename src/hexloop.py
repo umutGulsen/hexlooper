@@ -174,7 +174,7 @@ def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_l
     champ_network = None
     for gen in range(generations):
         g = Game(player_count=pop_size,
-                 player_starting_positions="random",
+                 player_starting_positions="fixed",
                  turn_limit=move_length,
                  board_config=board_config,
                  move_generation_type="network",
@@ -188,7 +188,7 @@ def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_l
         generation_scores[gen, :] = [p.score for p in g.players]
 
         gen_champ, best_score = g.find_winner()
-        best_score += gen_champ.track_score / 5
+        # best_score += gen_champ.track_score / 5
 
         if best_score > champ_score:
             champ_score = best_score
@@ -232,14 +232,15 @@ def display_ne_champion(champ_disp_count=1, move_length: int = 10, **params):
 
 board_config = {"height": 600,
                 "width": 1000,
-                "hex_radius": 12,
+                "hex_radius": 8,
                 "player_num_fontisze": 25,
                 "score_board_font": 26
                 }
 
 train_params = {
-    "display_interval": 5,
+    "display_interval": 1,
     "train_fps": 64000,
+    "move_length": 10,
 }
 
 ga_params = {
@@ -250,12 +251,12 @@ ga_params = {
     "stagnancy_extra_mutation_chance": .02
 }
 ne_params = {
-    "generations": 50,
-    "pop_size": 40,
-    "layer_sizes": [8, 6],
+    "generations": 80,
+    "pop_size": 6,
+    "layer_sizes": [24, 10],
     "network_update_variance": 1
 }
-display_ne_champion(champ_disp_count=3, move_length=25, **ne_params, **train_params)
+display_ne_champion(champ_disp_count=40, **ne_params, **train_params)
 """
 display_ga_champion(champ_disp_count=2, move_length=100, **ga_params, **train_params)
 

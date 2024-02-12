@@ -49,7 +49,7 @@ class Game(object):
                 neighbored = current_hex.is_neighbor(next_hex)
 
                 if neighbored and not backtrack and not occupied:
-                    p.move(next_hex.ix)
+                    p.move(next_hex.ix, self.hex_list)
                     change_happened = True
                     if self.game_mode != "coexist" and self.base_game_state[next_hex.ix, 3]:
                         for other_p in self.players:
@@ -81,7 +81,7 @@ class Game(object):
 
         if neighbored:
             if not backtrack and not occupied:
-                p.move(next_hex.ix)
+                p.move(next_hex.ix, self.hex_list)
                 change_happened = True
                 if self.game_mode != "coexist" and self.base_game_state[next_hex.ix, 3]:
                     for other_p in self.players:
@@ -187,10 +187,10 @@ class Game(object):
         max_score = -1
         champion = None
         for p in self.players:
-            if p.score > max_score:
-                max_score = p.score
+            if p.reward > max_score:
+                max_score = p.reward
                 champion = p
-        return champion, max_score
+        return champion, p.score
 
     def mutate_moves(self, move_list, mut_chance):
         for p in self.players:
