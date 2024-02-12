@@ -41,7 +41,7 @@ class Game(object):
         current_hex = self.hex_list[p.pos]
         for move in possible_moves:
             new_x, new_y = current_hex.generate_move_from_code(move)
-            next_hex = find_closest_hex(tuple(self.hex_list), new_x, new_y)
+            next_hex = find_closest_hex(self.hex_list, new_x, new_y)
 
             if next_hex is not None:
                 backtrack = p.player_game_state[next_hex.ix, 6] - p.player_game_state[next_hex.ix, 4]
@@ -69,7 +69,7 @@ class Game(object):
         change_happened = False
         current_hex = self.hex_list[p.pos]
         new_x, new_y = current_hex.generate_move_from_code(move)
-        next_hex = find_closest_hex(tuple(self.hex_list), new_x, new_y)
+        next_hex = find_closest_hex(self.hex_list, new_x, new_y)
 
         if next_hex is not None:
             backtrack = p.player_game_state[next_hex.ix, 6] - p.player_game_state[next_hex.ix, 4]
@@ -138,6 +138,7 @@ class Game(object):
             for p in self.players:
                 end_of_turn = (self.turn_limit is not None and self.turn >= self.turn_limit)
                 next_move = p.generate_move(generation_type=self.move_generation_type, game_mode=self.game_mode)
+
                 move_is_feasible = next_move is not None
                 if not end_of_turn and move_is_feasible:
                     if self.move_generation_type == "network":

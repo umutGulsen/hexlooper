@@ -45,7 +45,7 @@ class Player:
         if layer_sizes is None:
             layer_sizes = [1]
         if game_mode == "coexist":
-            input_size = dims["n_hexes"] * (dims["hex_state"] - 4)
+            input_size = dims["n_hexes"] * (dims["hex_state"] - 5)
         else:
             input_size = dims["n_hexes"] * dims["hex_state"]
         layer_sizes.append(dims["action_count"])
@@ -87,7 +87,7 @@ class Player:
             return self.generate_move_from_fixed_list()
         elif generation_type == "network":
             if game_mode == "coexist":
-                relevant_game_state = self.player_game_state[:, [4, 5, 6]]
+                relevant_game_state = self.player_game_state[:, [4, 6]]
             else:
                 relevant_game_state = self.player_game_state
             input_x = relevant_game_state.reshape(relevant_game_state.shape[0] * relevant_game_state.shape[1], 1)

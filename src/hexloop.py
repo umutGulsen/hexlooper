@@ -207,8 +207,6 @@ def display_ne_champion(champ_disp_count=1, move_length: int = 10, **params):
     theoretical_max = move_length * (move_length + 1) / 2
     logging.info(f"Theoretical Max Score: {theoretical_max}")
     best_network, record = network_evolution(move_length=move_length,
-                                             display_interval=1,
-                                             train_fps=6400,
                                              **params)
     logging.info(
         f"Achieved score (% of theoretical max): %{round(100 * record['champion_scores'][-1] / theoretical_max, 2)}")
@@ -238,6 +236,12 @@ board_config = {"height": 600,
                 "player_num_fontisze": 25,
                 "score_board_font": 26
                 }
+
+train_params = {
+    "display_interval": 5,
+    "train_fps": 64000,
+}
+
 ga_params = {
     "generations": 70,
     "pop_size": 100,
@@ -246,14 +250,14 @@ ga_params = {
     "stagnancy_extra_mutation_chance": .02
 }
 ne_params = {
-    "generations": 10,
-    "pop_size": 30,
-    "layer_sizes": [8, 8],
+    "generations": 50,
+    "pop_size": 40,
+    "layer_sizes": [8, 6],
     "network_update_variance": 1
 }
-display_ne_champion(champ_disp_count=3, move_length=25, **ne_params)
+display_ne_champion(champ_disp_count=3, move_length=25, **ne_params, **train_params)
 """
-display_ga_champion(champ_disp_count=2, move_length=100, **ga_params)
+display_ga_champion(champ_disp_count=2, move_length=100, **ga_params, **train_params)
 
 
 run_optimization_with_optuna(

@@ -3,7 +3,6 @@ from Hex import Hex
 import math
 from utils import find_closest_hex
 
-
 class Board:
 
     def __init__(self, board_config, colors):
@@ -93,4 +92,4 @@ class Board:
             closest_hex = find_closest_hex(mouse_x, mouse_y)
             self.draw_hexagon(closest_hex.center_x, closest_hex.center_y, self.board_config["hex_radius"],
                               edge_color=self.colors["HIGHLIGHT_COLOR"], fill_color=self.colors["HIGHLIGHT_COLOR"])
-        return hex_list
+        return tuple(hex_list)
