@@ -2,31 +2,9 @@ from Player import Player
 import numpy as np
 import pygame
 from Board import Board
-import functools
+from utils import find_closest_hex
 import logging
 import copy
-
-
-@functools.lru_cache(maxsize=None)
-def distance(x1, y1, x2, y2):
-    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** .5
-
-
-@functools.lru_cache(maxsize=None)
-def distance_between_hexes(self, hex1, hex2):
-    x1, y1 = hex1.center_x, hex1.center_y
-    x2, y2 = hex2.center_x, hex2.center_y
-    return self.distance(x1, y1, x2, y2)
-
-
-@functools.lru_cache(maxsize=None)
-def find_closest_hex(hex_list, x, y):
-    for hex1 in hex_list:
-        dist = distance(x, y, hex1.center_x, hex1.center_y)
-        if dist < hex1.r ** 2 / 3:
-            return hex1
-    return None
-
 
 class Game(object):
 
@@ -63,7 +41,7 @@ class Game(object):
         current_hex = self.hex_list[p.pos]
         for move in possible_moves:
             new_x, new_y = current_hex.generate_move_from_code(move)
-            next_hex = find_closest_hex(self.hex_list, new_x, new_y)
+            next_hex = find_closest_hex(tuple(self.hex_list), new_x, new_y)
 
             if next_hex is not None:
                 backtrack = p.player_game_state[next_hex.ix, 6] - p.player_game_state[next_hex.ix, 4]
@@ -91,7 +69,7 @@ class Game(object):
         change_happened = False
         current_hex = self.hex_list[p.pos]
         new_x, new_y = current_hex.generate_move_from_code(move)
-        next_hex = find_closest_hex(self.hex_list, new_x, new_y)
+        next_hex = find_closest_hex(tuple(self.hex_list), new_x, new_y)
 
         if next_hex is not None:
             backtrack = p.player_game_state[next_hex.ix, 6] - p.player_game_state[next_hex.ix, 4]

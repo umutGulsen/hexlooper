@@ -165,7 +165,7 @@ def run_optimization_with_optuna(n_trials: int = 20):
 
 
 def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_length: int, display_interval: int,
-                      train_fps: int = 4096):
+                      train_fps: int = 4096, **params):
     theoretical_max = move_length * (move_length + 1) / 2
     record = {}
     generation_scores = np.zeros((generations, pop_size))
@@ -182,7 +182,8 @@ def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_l
                  colors=colors,
                  random_player_colors=True,
                  layer_sizes=layer_sizes,
-                 base_network=champ_network)
+                 base_network=champ_network,
+                 **params)
         g.run_game(fps=train_fps, display_interval=display_interval)
         generation_scores[gen, :] = [p.score for p in g.players]
 
@@ -245,12 +246,12 @@ ga_params = {
     "stagnancy_extra_mutation_chance": .02
 }
 ne_params = {
-    "generations": 200,
+    "generations": 10,
     "pop_size": 30,
     "layer_sizes": [8, 8],
     "network_update_variance": 1
 }
-display_ne_champion(champ_disp_count=70, move_length=25, **ne_params)
+display_ne_champion(champ_disp_count=3, move_length=25, **ne_params)
 """
 display_ga_champion(champ_disp_count=2, move_length=100, **ga_params)
 

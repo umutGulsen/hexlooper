@@ -1,7 +1,7 @@
 import pygame
 from Hex import Hex
 import math
-from Game import find_closest_hex
+from utils import find_closest_hex
 
 
 class Board:
@@ -36,41 +36,41 @@ class Board:
             for col in range(1 * col_step, width - 6 * col_step, col_step):
                 self.draw_hexagon(col + step * 1.5 * hex_radius, row, r=self.board_config["hex_radius"],
                                   edge_color=self.colors["GRAY"], fill_color=self.colors["BLACK"])
-                new_hex = Hex(ix=len(self.hex_list), r=hex_radius,
+                new_hex = Hex(ix=len(hex_list), r=hex_radius,
                               center_x=col + step * 1.5 * self.board_config["hex_radius"],
                               center_y=row)
                 hex_list.append(new_hex)
         return hex_list
 
-    def draw_track(self, p):
+    def draw_track(self, p, hex_list):
         if len(p.track) > 1:
             points = []
 
             for hex_pos in p.track:
-                hex_in_track = self.hex_list[hex_pos]
+                hex_in_track = hex_list[hex_pos]
                 x, y = hex_in_track.center_x, hex_in_track.center_y
                 points.append((x, y))
 
             pygame.draw.polygon(self.screen, p.player_color, points, 2)
 
-    def draw_player_related_hexes(self, p):
+    def draw_player_related_hexes(self, hex_list, p):
         for i, hex_pos in enumerate(p.track):
-            hex_in_track = self.hex_list[hex_pos]
+            hex_in_track = hex_list[hex_pos]
             self.draw_hexagon(hex_in_track.center_x, hex_in_track.center_y,
                               self.board_config["hex_radius"] / 3,
                               edge_color=self.colors["GRAY"], fill_color=p.track_color)
 
-        self.draw_hexagon(self.hex_list[p.nest].center_x, self.hex_list[p.nest].center_y,
+        self.draw_hexagon(hex_list[p.nest].center_x, hex_list[p.nest].center_y,
                           self.board_config["hex_radius"], edge_color=self.colors["GRAY"],
                           fill_color=self.colors["BLACK"])
 
-        self.draw_hexagon(self.hex_list[p.nest].center_x, self.hex_list[p.nest].center_y,
+        self.draw_hexagon(hex_list[p.nest].center_x, hex_list[p.nest].center_y,
                           self.board_config["hex_radius"] / 2, edge_color=self.colors["GRAY"],
                           fill_color=self.colors["GREEN"])
 
-        self.draw_hexagon(self.hex_list[p.pos].center_x, self.hex_list[p.pos].center_y, self.board_config["hex_radius"],
+        self.draw_hexagon(hex_list[p.pos].center_x, hex_list[p.pos].center_y, self.board_config["hex_radius"],
                           edge_color=self.colors["GRAY"], fill_color=p.player_color)
-        self.draw_track(p)
+        self.draw_track(p, hex_list)
 
     def display_game(self, players, highlight=False):
         self.screen.fill(self.colors["BLACK"])
@@ -81,7 +81,7 @@ class Board:
             # text_area = pygame.Rect(500, 100, 30, 30)
             score_text = self.scoreboard_font.render(f"Score: P{p.id}: {p.score} ({p.track_score})", True,
                                                      p.player_color)
-            self.draw_player_related_hexes(p)
+            self.draw_player_related_hexes(hex_list, p)
             self.screen.blit(score_text, (835, 10 + 20 * p.id))
             id_text = self.player_num_font.render(f"{p.id}", True, self.colors["BLACK"])
             self.screen.blit(id_text,
