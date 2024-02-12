@@ -4,9 +4,9 @@ import logging
 from Network import Network
 
 
-class Player():
-    def __init__(self, id, pos, random_color=False):
-        self.id = id
+class Player:
+    def __init__(self, player_id, pos, random_color=False):
+        self.id = player_id
         self.pos = pos
         self.nest = pos
         self.track = [pos]
@@ -20,7 +20,7 @@ class Player():
         if random_color:
             palette = sns.color_palette("Spectral", n_colors=200)
             color_val = palette[np.random.randint(0, 200)]
-            self.player_color = [255*val for val in color_val]
+            self.player_color = [255 * val for val in color_val]
             self.track_color = tuple((x + y) / 2 for x, y in zip(self.player_color, (30, 30, 30)))
         else:
             self.player_color = (153, 0, 0)
@@ -41,9 +41,11 @@ class Player():
         self.move_list = new_move_list
         self.static_move_list = new_move_list
 
-    def initialize_network(self, dims: dict, layer_sizes=[1], game_mode=""):
+    def initialize_network(self, dims: dict, layer_sizes=None, game_mode=""):
+        if layer_sizes is None:
+            layer_sizes = [1]
         if game_mode == "coexist":
-            input_size = dims["n_hexes"] * (dims["hex_state"]-4)
+            input_size = dims["n_hexes"] * (dims["hex_state"] - 4)
         else:
             input_size = dims["n_hexes"] * dims["hex_state"]
         layer_sizes.append(dims["action_count"])
@@ -85,10 +87,10 @@ class Player():
             return self.generate_move_from_fixed_list()
         elif generation_type == "network":
             if game_mode == "coexist":
-                relevant_game_state = self.player_game_state[:, [4,5,6]]
+                relevant_game_state = self.player_game_state[:, [4, 5, 6]]
             else:
                 relevant_game_state = self.player_game_state
-            input_x = relevant_game_state.reshape(relevant_game_state.shape[0]*relevant_game_state.shape[1], 1)
+            input_x = relevant_game_state.reshape(relevant_game_state.shape[0] * relevant_game_state.shape[1], 1)
             return self.generate_move_from_network(x=input_x)
 
         elif generation_type == "fixed":
@@ -100,13 +102,13 @@ class Player():
         self.player_game_state[self.pos, 2] = 0
         self.player_game_state[self.track, 3] = 0
 
-        self.player_game_state[self.nest, 1+3] = 1
-        self.player_game_state[self.pos, 2+3] = 1
-        self.player_game_state[self.track, 3+3] = 1
+        self.player_game_state[self.nest, 1 + 3] = 1
+        self.player_game_state[self.pos, 2 + 3] = 1
+        self.player_game_state[self.track, 3 + 3] = 1
 
-        #logging.debug(self.id)
-        #logging.debug(self.player_game_state)
-        logging.debug(f"{np.sum(self.player_game_state[:,0])} hexes are empty")
+        # logging.debug(self.id)
+        # logging.debug(self.player_game_state)
+        logging.debug(f"{np.sum(self.player_game_state[:, 0])} hexes are empty")
         logging.debug(f"{np.sum(self.player_game_state[:, 1])} hexes have nests")
         logging.debug(f"{np.sum(self.player_game_state[:, 2])} hexes have players")
         logging.debug(f"{np.sum(self.player_game_state[:, 3])} hexes are tracks")

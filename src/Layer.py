@@ -19,9 +19,7 @@ class Layer:
             return x
 
     def forward_prop(self, x_input: np.ndarray):
-        #print(f"{x_input.shape=} {self.weights.shape=} {self.biases.shape=}")
         output = np.dot(self.weights, x_input)
-        #print(f"{x_input.shape=} {self.weights.shape=} {output.shape=} {self.biases.shape=}")
         output += self.biases
         output = self.activation(output)
         return output

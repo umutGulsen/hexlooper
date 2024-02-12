@@ -1,11 +1,9 @@
-import numpy as np
 from Layer import Layer
 
 
 class Network:
 
     def __init__(self, layer_sizes, input_dim, activator):
-        #self.normalizer = normalizer
         self.layers = []
 
         for layer_size in layer_sizes:

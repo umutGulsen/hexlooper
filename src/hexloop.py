@@ -47,7 +47,6 @@ def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_
     champ_score = -1
     champ_moves = ((np.random.rand(move_length) * 6 + 1).astype(int))
 
-    best_scores = []
     for gen in range(generations):
         logging.info(f"Started Generation {gen}")
         g = Game(player_count=pop_size,
@@ -112,7 +111,7 @@ def display_ga_champion(champ_disp_count=1, move_length: int = 100, **params):
         g = Game(player_count=1,
                  player_starting_positions="fixed",
                  board_config=board_config,
-                 random_move_count=move_length,
+                 move_count=move_length,
                  move_generation_type="list",
                  colors=colors)
 
@@ -225,7 +224,7 @@ def display_ne_champion(champ_disp_count=1, move_length: int = 10, **params):
                  network_update_variance=0,
                  colors=colors)
 
-        #g.players[0].network = best_network
+        # g.players[0].network = best_network
         g.run_game(fps=4, display_interval=1, wait_for_user=False)
         # time.sleep(2)
     pygame.quit()
@@ -234,7 +233,9 @@ def display_ne_champion(champ_disp_count=1, move_length: int = 10, **params):
 
 board_config = {"height": 600,
                 "width": 1000,
-                "hex_radius": 12
+                "hex_radius": 12,
+                "player_num_fontisze": 25,
+                "score_board_font": 26
                 }
 ga_params = {
     "generations": 70,
@@ -246,7 +247,8 @@ ga_params = {
 ne_params = {
     "generations": 200,
     "pop_size": 30,
-    "layer_sizes": [8, 8]
+    "layer_sizes": [8, 8],
+    "network_update_variance": 1
 }
 display_ne_champion(champ_disp_count=70, move_length=25, **ne_params)
 """
