@@ -41,11 +41,13 @@ class Player():
         self.move_list = new_move_list
         self.static_move_list = new_move_list
 
-    def initialize_network(self, dims: dict, layer_sizes=[1]):
-        input_size = dims["n_hexes"] * dims["hex_state"]
+    def initialize_network(self, dims: dict, layer_sizes=[1], game_mode=""):
+        if game_mode == "coexist":
+            input_size = dims["n_hexes"] * (dims["hex_state"]-4)
+        else:
+            input_size = dims["n_hexes"] * dims["hex_state"]
         layer_sizes.append(dims["action_count"])
         self.network = Network(layer_sizes, input_size, activator="relu")
-        self.network.randomly_initialize_params()
 
     def complete_loop(self):
         self.track = [self.nest]
@@ -76,13 +78,18 @@ class Player():
     def generate_move_from_network(self, x):
         output = self.network.forward_prop(x)
         logging.debug(f"{output=}")
-        return np.argmax(output)
+        return np.argsort(-output.flatten())
 
-    def generate_move(self, generation_type: str):
+    def generate_move(self, generation_type: str, game_mode):
         if generation_type == "list":
             return self.generate_move_from_fixed_list()
         elif generation_type == "network":
-            return self.generate_move_from_network(x=self.player_game_state.reshape(self.player_game_state.shape[0]*self.player_game_state.shape[1], 1))
+            if game_mode == "coexist":
+                relevant_game_state = self.player_game_state[:, [4,5,6]]
+            else:
+                relevant_game_state = self.player_game_state
+            input_x = relevant_game_state.reshape(relevant_game_state.shape[0]*relevant_game_state.shape[1], 1)
+            return self.generate_move_from_network(x=input_x)
 
         elif generation_type == "fixed":
             return int(1)

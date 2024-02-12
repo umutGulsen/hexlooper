@@ -14,7 +14,7 @@ from optuna.visualization import plot_param_importances
 from optuna.visualization import plot_optimization_history
 import logging
 
-#logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.basicConfig(level=logging.INFO)
 
 colors = {
@@ -53,7 +53,7 @@ def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_
         g = Game(player_count=pop_size,
                  player_starting_positions="fixed",
                  board_config=board_config,
-                 random_move_count=move_length,
+                 move_count=move_length,
                  move_generation_type="list",
                  game_mode="coexist",
                  colors=colors,
@@ -64,7 +64,7 @@ def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_
         else:
             enough_gens_to_measure_stagnancy = gen >= stagnancy_length
             if enough_gens_to_measure_stagnancy:
-                scores_stagnant = champion_scores[gen-stagnancy_length] == champion_scores[gen-1]
+                scores_stagnant = champion_scores[gen - stagnancy_length] == champion_scores[gen - 1]
                 if scores_stagnant:
                     g.mutate_moves(champ_moves, mut_chance=mutation_chance + stagnancy_extra_mutation_chance)
                     logging.info(f"Stagnancy detected in Gen {gen}!")
@@ -126,8 +126,8 @@ def display_ga_champion(champ_disp_count=1, move_length: int = 100, **params):
 def objective(trial):
     move_length = 50
     params = {
-        #"generations": trial.suggest_int("generations", 15, 40),
-        #"pop_size": trial.suggest_int("pop_size", 1, 40),
+        # "generations": trial.suggest_int("generations", 15, 40),
+        # "pop_size": trial.suggest_int("pop_size", 1, 40),
         "generations": 40,
         "pop_size": 40,
         "mutation_chance": trial.suggest_float("mutation_chance", .01, .35),
@@ -165,24 +165,97 @@ def run_optimization_with_optuna(n_trials: int = 20):
     plot_contour(study).write_html("optuna_results/contour.html")
 
 
+def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_length: int, display_interval: int,
+                      train_fps: int = 4096):
+    theoretical_max = move_length * (move_length + 1) / 2
+    record = {}
+    generation_scores = np.zeros((generations, pop_size))
+    champion_scores = np.zeros(generations)
+    champ_score = -1
+    champ_network = None
+    for gen in range(generations):
+        g = Game(player_count=pop_size,
+                 player_starting_positions="random",
+                 turn_limit=move_length,
+                 board_config=board_config,
+                 move_generation_type="network",
+                 game_mode="coexist",
+                 colors=colors,
+                 random_player_colors=True,
+                 layer_sizes=layer_sizes,
+                 base_network=champ_network)
+        g.run_game(fps=train_fps, display_interval=display_interval)
+        generation_scores[gen, :] = [p.score for p in g.players]
+
+        gen_champ, best_score = g.find_winner()
+        best_score += gen_champ.track_score / 5
+
+        if best_score > champ_score:
+            champ_score = best_score
+            champ_network = copy.deepcopy(gen_champ.network)
+        champion_scores[gen] = champ_score
+        logging.info(f"Finished Generation {gen} with score: {best_score} / Last Champ: {champ_score}")
+        record["champion_scores"] = champion_scores
+        record["generation_scores"] = generation_scores
+        if champ_score >= theoretical_max:
+            logging.info("Theoretical Max Score Achieved!!")
+            break
+    return champ_network, record
+
+
+def display_ne_champion(champ_disp_count=1, move_length: int = 10, **params):
+    theoretical_max = move_length * (move_length + 1) / 2
+    logging.info(f"Theoretical Max Score: {theoretical_max}")
+    best_network, record = network_evolution(move_length=move_length,
+                                             display_interval=1,
+                                             train_fps=6400,
+                                             **params)
+    logging.info(
+        f"Achieved score (% of theoretical max): %{round(100 * record['champion_scores'][-1] / theoretical_max, 2)}")
+    # best_moves=[_%2 for _ in range(5)]
+    # print(best_moves)
+    for _ in range(champ_disp_count):
+        g = Game(player_count=1,
+                 player_starting_positions="fixed",
+                 board_config=board_config,
+                 turn_limit=move_length,
+                 move_generation_type="network",
+                 game_mode="coexist",
+                 base_network=best_network,
+                 network_update_variance=0,
+                 colors=colors)
+
+        #g.players[0].network = best_network
+        g.run_game(fps=4, display_interval=1, wait_for_user=False)
+        # time.sleep(2)
+    pygame.quit()
+    visualize_scores(record)
+
+
 board_config = {"height": 600,
                 "width": 1000,
-                "hex_radius": 24
+                "hex_radius": 12
                 }
-params = {
+ga_params = {
     "generations": 70,
-    "pop_size": 10,
+    "pop_size": 100,
     "mutation_chance": .017,
     "stagnancy_length": 2,
     "stagnancy_extra_mutation_chance": .02
 }
+ne_params = {
+    "generations": 200,
+    "pop_size": 30,
+    "layer_sizes": [8, 8]
+}
+display_ne_champion(champ_disp_count=70, move_length=25, **ne_params)
 """
-display_ga_champion(champ_disp_count=2, move_length=100, **params)
+display_ga_champion(champ_disp_count=2, move_length=100, **ga_params)
 
 
 run_optimization_with_optuna(
 )"""
-
+"""
 g = Game(player_count=1,
          player_starting_positions="random",
          random_move_count=0,
@@ -192,9 +265,9 @@ g = Game(player_count=1,
          game_mode="",
          colors=colors,
          random_player_colors=True,
-         layer_sizes=[4,4])
+         layer_sizes=[4, 4])
 g.run_game(fps=1, display_interval=1, wait_for_user=False)
-"""
+
 """
 # pygame.quit()
 # print(g.find_winner())
