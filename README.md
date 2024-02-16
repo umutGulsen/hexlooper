@@ -20,3 +20,15 @@ Rules of the game:
  - If they somehow loop back to their nests, their track score is added to their actual score, their track and track score are cleared
  - If a player steps on the track of another player, other player's track and track score is cleared and their current hex becomes their new nest
  - Player with the highest score wins!
+
+## Current implemented features:
+ - Playable game with a custom board and player number
+ - Learning with Genetic Algorithm
+ - Learning with Random Neural Networks
+ - Optimization of learning algorithms with Optuna
+
+## Aspirations:
+ - Higher performance
+ - NEAT algorithm
+ - Q-Learning implementation
+ - Network visualization
