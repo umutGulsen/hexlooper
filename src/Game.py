@@ -6,11 +6,13 @@ from utils import find_closest_hex
 import logging
 import copy
 
+
 class Game(object):
 
     def __init__(self, player_count: int, board_config, player_starting_positions="random", move_count=0,
                  turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str = "default",
-                 random_player_colors=False, layer_sizes=None, base_network=None, network_update_variance=1):
+                 random_player_colors=False, layer_sizes=None, base_network=None, network_update_variance=1,
+                 layer_activation=""):
 
         row_step = int((3 ** .5) * board_config["hex_radius"] * (2 / 4))
         col_step = int(3 * board_config["hex_radius"])
@@ -19,7 +21,7 @@ class Game(object):
         self.move_generation_type = move_generation_type
         for i in range(player_count):
             pos = int(np.random.rand() * hex_count) if player_starting_positions == "random" else int(.5 * hex_count)
-            new_player = Player(player_id=i, pos=pos, random_color=random_player_colors)
+            new_player = Player(player_id=i, pos=pos, random_color=random_player_colors, layer_activation=layer_activation)
             if self.move_generation_type == "list":
                 new_player.generate_random_moves(move_count)
             else:
@@ -115,7 +117,8 @@ class Game(object):
         pygame.init()
         running = True
         pygame.display.set_caption("Hexlooper")
-        clock = pygame.time.Clock()
+        if fps < 1000:
+            clock = pygame.time.Clock()
         first = True
 
         while running:
@@ -180,7 +183,8 @@ class Game(object):
                                             f"Cannot move to that hex!(is neighbor:{current_hex.is_neighbor(next_hex)}   {backtrack=}")
             if show_this_time:
                 pygame.display.flip()
-            clock.tick(fps)
+            if fps < 1000:
+                clock.tick(fps)
             self.turn = (self.turn + 1) % int(1e6)
 
     def find_winner(self):

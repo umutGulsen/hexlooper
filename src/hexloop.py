@@ -239,7 +239,7 @@ board_config = {"height": 600,
 
 train_params = {
     "display_interval": 1,
-    "train_fps": 64000,
+    "train_fps": 640000,
     "move_length": 10,
 }
 
@@ -251,12 +251,17 @@ ga_params = {
     "stagnancy_extra_mutation_chance": .02
 }
 ne_params = {
-    "generations": 80,
-    "pop_size": 6,
+    "generations": 10,
+    "pop_size": 20,
     "layer_sizes": [24, 10],
-    "network_update_variance": 1
+    "network_update_variance": 1,
+    "layer_activation": "relu"
 }
-display_ne_champion(champ_disp_count=40, **ne_params, **train_params)
+
+#display_ne_champion(champ_disp_count=40, **ne_params, **train_params)
+
+import cProfile
+cProfile.run("display_ne_champion(champ_disp_count=10, **ne_params, **train_params)", sort="tottime")
 """
 display_ga_champion(champ_disp_count=2, move_length=100, **ga_params, **train_params)
 

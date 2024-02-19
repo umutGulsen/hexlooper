@@ -5,7 +5,7 @@ from Network import Network
 from utils import distance_between_hexes
 
 class Player:
-    def __init__(self, player_id, pos, random_color=False):
+    def __init__(self, player_id, pos, random_color=False, layer_activation=""):
         self.id = player_id
         self.pos = pos
         self.nest = pos
@@ -16,6 +16,7 @@ class Player:
         self.consec_stalls = 0
         self.move_list = []
         self.network = None
+        self.layer_activation = layer_activation
         self.static_move_list = []
         self.player_game_state = None
         if random_color:
@@ -50,7 +51,7 @@ class Player:
         else:
             input_size = dims["n_hexes"] * dims["hex_state"]
         layer_sizes.append(dims["action_count"])
-        self.network = Network(layer_sizes, input_size, activator="relu")
+        self.network = Network(layer_sizes, input_size, activator=self.layer_activation)
 
     def complete_loop(self):
         self.track = [self.nest]
@@ -90,6 +91,7 @@ class Player:
     def generate_move(self, generation_type: str, game_mode):
         if generation_type == "list":
             return self.generate_move_from_fixed_list()
+        # TODO give turn limit and count as inputs
         elif generation_type == "network":
             if game_mode == "coexist":
                 relevant_game_state = self.player_game_state[:, [4, 6]]
