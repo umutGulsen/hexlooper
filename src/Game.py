@@ -169,7 +169,7 @@ class Game(object):
                                     occupied = any(next_hex.ix == other_p.pos for other_p in self.players)
                                     if current_hex.is_neighbor(next_hex) and (
                                             not backtrack or next_hex.ix == p_.nest) and not occupied:
-                                        p_.move(next_hex.ix)
+                                        p_.move(next_hex.ix, self.hex_list)
                                         self.update_base_game_state()
                                         current_hex.find_move_code(next_hex)
                                         if self.base_game_state[next_hex.ix, 3] == 1:

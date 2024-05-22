@@ -10,7 +10,7 @@ class Board:
         self.colors = colors
         self.screen = pygame.display.set_mode((board_config["width"], board_config["height"]))
         pygame.init()
-        self.player_num_font = pygame.font.Font(None, board_config["player_num_fontisze"])
+        self.player_num_font = pygame.font.Font(None, board_config["player_num_fontsize"])
         self.scoreboard_font = pygame.font.Font(None, board_config["score_board_font"])
 
     def draw_hexagon(self, x, y, r=1, edge_color=(30, 30, 30), fill_color=(200, 200, 200)):

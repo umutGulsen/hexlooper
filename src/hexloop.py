@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import optuna
 import copy
+import json
 import os
 import time
 from optuna.visualization import plot_contour
@@ -16,16 +17,6 @@ import logging
 
 # logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.basicConfig(level=logging.INFO)
-
-colors = {
-    "BLACK": (45, 45, 45),
-    "WHITE": (255, 255, 255),
-    "GRAY": (200, 200, 200),
-    "GREEN": (0, 153, 51),
-    "PLAYER_COLOR": (153, 0, 0),
-    "HIGHLIGHT_COLOR": (255, 255, 0),  # Yellow for highlight
-    "TRACK_COLOR": (102, 153, 255)
-}
 
 
 # import cProfile
@@ -51,7 +42,7 @@ def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_
         logging.info(f"Started Generation {gen}")
         g = Game(player_count=pop_size,
                  player_starting_positions="fixed",
-                 board_config=board_config,
+                 board_config=config["board_config"],
                  move_count=move_length,
                  move_generation_type="list",
                  game_mode="coexist",
@@ -110,7 +101,7 @@ def display_ga_champion(champ_disp_count=1, move_length: int = 100, **params):
     for _ in range(champ_disp_count):
         g = Game(player_count=1,
                  player_starting_positions="fixed",
-                 board_config=board_config,
+                 board_config=config["board_config"],
                  move_count=move_length,
                  move_generation_type="list",
                  colors=colors)
@@ -176,7 +167,7 @@ def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_l
         g = Game(player_count=pop_size,
                  player_starting_positions="fixed",
                  turn_limit=move_length,
-                 board_config=board_config,
+                 board_config=config["board_config"],
                  move_generation_type="network",
                  game_mode="coexist",
                  colors=colors,
@@ -215,7 +206,7 @@ def display_ne_champion(champ_disp_count=1, move_length: int = 10, **params):
     for _ in range(champ_disp_count):
         g = Game(player_count=1,
                  player_starting_positions="fixed",
-                 board_config=board_config,
+                 board_config=config["board_config"],
                  turn_limit=move_length,
                  move_generation_type="network",
                  game_mode="coexist",
@@ -230,38 +221,18 @@ def display_ne_champion(champ_disp_count=1, move_length: int = 10, **params):
     visualize_scores(record)
 
 
-board_config = {"height": 600,
-                "width": 1000,
-                "hex_radius": 8,
-                "player_num_fontisze": 25,
-                "score_board_font": 26
-                }
-
-train_params = {
-    "display_interval": 1,
-    "train_fps": 640000,
-    "move_length": 10,
+colors = {
+    "BLACK": (45, 45, 45),
+    "WHITE": (255, 255, 255),
+    "GRAY": (200, 200, 200),
+    "GREEN": (0, 153, 51),
+    "PLAYER_COLOR": (153, 0, 0),
+    "HIGHLIGHT_COLOR": (255, 255, 0),  # Yellow for highlight
+    "TRACK_COLOR": (102, 153, 255)
 }
 
-ga_params = {
-    "generations": 70,
-    "pop_size": 100,
-    "mutation_chance": .017,
-    "stagnancy_length": 2,
-    "stagnancy_extra_mutation_chance": .02
-}
-ne_params = {
-    "generations": 10,
-    "pop_size": 20,
-    "layer_sizes": [24, 10],
-    "network_update_variance": 1,
-    "layer_activation": "relu"
-}
+# display_ne_champion(champ_disp_count=40, **ne_params, **train_params)
 
-#display_ne_champion(champ_disp_count=40, **ne_params, **train_params)
-
-import cProfile
-cProfile.run("display_ne_champion(champ_disp_count=10, **ne_params, **train_params)", sort="tottime")
 """
 display_ga_champion(champ_disp_count=2, move_length=100, **ga_params, **train_params)
 
@@ -282,6 +253,48 @@ g = Game(player_count=1,
 g.run_game(fps=1, display_interval=1, wait_for_user=False)
 
 """
+
+
 # pygame.quit()
 # print(g.find_winner())
-sys.exit()
+
+
+def main():
+    global config
+    with open('src/config.json', 'r') as file:
+        config = json.load(file)
+
+    print("### WELCOME TO HEXLOOPER ###")
+    print("### CHOOSE THE GAME MODE... ###")
+    print(
+        "Profiling (p) - Just Play (j) - Random Evolution (r) - Neural Network Evolution (n) - Hyperparameter Optimization (h)")
+    while True:
+        mode = input("")
+        if mode not in ["p", "j", "r", "n", "h"]:
+            print("Choose a valid mode")
+            continue
+        else:
+            if mode == "p":
+                import cProfile
+                cProfile.run("display_ne_champion(champ_disp_count=10, **ne_params, **train_params)", sort="tottime")
+            elif mode == "j":
+                game_params = {"player_count": 2,
+                               "player_starting_positions": "random",
+                               "board_config": config["board_config"],
+                               "turn_limit": 10,
+                               "move_generation_type": "manual",
+                               "game_mode": "just_play",
+                               "colors": colors,
+                               "random_player_colors": True,
+                               }
+                print(f"Game is running with following parameters:")
+                for key, value in game_params.items():
+                    print(f"{key}: {value}")
+                g = Game(**game_params)
+                g.run_game(fps=10, display_interval=1, wait_for_user=True)
+            break
+    sys.exit()
+
+
+if __name__ == '__main__':
+    main()
