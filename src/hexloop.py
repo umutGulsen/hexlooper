@@ -278,7 +278,8 @@ def main():
                 import cProfile
                 cProfile.run("display_ne_champion(champ_disp_count=10, **ne_params, **train_params)", sort="tottime")
             elif mode == "j":
-                game_params = {"player_count": 2,
+                player_count = input("Choose player count")
+                game_params = {"player_count": int(player_count),
                                "player_starting_positions": "random",
                                "board_config": config["board_config"],
                                "turn_limit": 10,

@@ -116,6 +116,7 @@ class Game(object):
     def run_game(self, fps=64, display_interval: int = 1, wait_for_user=False, show_first_frame=True):
         pygame.init()
         running = True
+        last_moved_player = -1
         pygame.display.set_caption("Hexlooper")
         if fps < 1000:
             clock = pygame.time.Clock()
@@ -163,13 +164,18 @@ class Game(object):
                                 next_hex = find_closest_hex(self.hex_list, mouse_x, mouse_y)
                                 if next_hex is None:
                                     continue
-                                for p_ in self.players:
+                                if last_moved_player != -1 or last_moved_player != len(self.players):
+                                    order_check_list = self.players[last_moved_player+1:] + self.players[:last_moved_player+1]
+                                else:
+                                    order_check_list = self.players
+                                for p_ in order_check_list:
                                     current_hex = self.hex_list[p_.pos]
                                     backtrack = any(next_hex.ix == hex_pos for hex_pos in p_.track)
                                     occupied = any(next_hex.ix == other_p.pos for other_p in self.players)
                                     if current_hex.is_neighbor(next_hex) and (
                                             not backtrack or next_hex.ix == p_.nest) and not occupied:
                                         p_.move(next_hex.ix, self.hex_list)
+                                        last_moved_player = p_.id
                                         self.update_base_game_state()
                                         current_hex.find_move_code(next_hex)
                                         if self.base_game_state[next_hex.ix, 3] == 1:
@@ -187,6 +193,9 @@ class Game(object):
                 clock.tick(fps)
             self.turn = (self.turn + 1) % int(1e6)
 
+        if self.game_mode == "just_play":
+            self.display_scores()
+
     def find_winner(self):
         max_score = -1
         champion = None
@@ -199,3 +208,7 @@ class Game(object):
     def mutate_moves(self, move_list, mut_chance):
         for p in self.players:
             p.mutate_random_moves(move_list, per_move_mutation_chance=mut_chance)
+
+    def display_scores(self):
+        for p in self.players:
+            print(f"{p.id}: {p.score} ({p.track_score})")
