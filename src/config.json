@@ -12,6 +12,7 @@
     "move_length": 10
   },
   "ga_params": {
+    "move_length": 100,
     "generations": 70,
     "pop_size": 100,
     "mutation_chance": 0.017,

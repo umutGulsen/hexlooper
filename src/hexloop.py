@@ -86,7 +86,7 @@ def visualize_scores(record):
     plt.show()
 
 
-def display_ga_champion(champ_disp_count=1, move_length: int = 100, **params):
+def display_ga_champion(champ_disp_count=1, move_length: int = 100, params: dict = None):
     theoretical_max = move_length * (move_length + 1) / 2
     logging.info(f"Theoretical Max Score: {theoretical_max}")
     best_moves, record = genetic_algorithm(initial_mutation_chance=.8,
@@ -99,6 +99,7 @@ def display_ga_champion(champ_disp_count=1, move_length: int = 100, **params):
     # best_moves=[_%2 for _ in range(5)]
     # print(best_moves)
     for _ in range(champ_disp_count):
+        g = Game(**game_params)
         g = Game(player_count=1,
                  player_starting_positions="fixed",
                  board_config=config["board_config"],
@@ -234,7 +235,7 @@ colors = {
 # display_ne_champion(champ_disp_count=40, **ne_params, **train_params)
 
 """
-display_ga_champion(champ_disp_count=2, move_length=100, **ga_params, **train_params)
+
 
 
 run_optimization_with_optuna(
@@ -278,7 +279,7 @@ def main():
                 import cProfile
                 cProfile.run("display_ne_champion(champ_disp_count=10, **ne_params, **train_params)", sort="tottime")
             elif mode == "j":
-                player_count = input("Choose player count")
+                player_count = input("Choose player count: ")
                 game_params = {"player_count": int(player_count),
                                "player_starting_positions": "random",
                                "board_config": config["board_config"],
@@ -293,6 +294,10 @@ def main():
                     print(f"{key}: {value}")
                 g = Game(**game_params)
                 g.run_game(fps=10, display_interval=1, wait_for_user=True)
+            elif mode == "r":
+                display_ga_champion(champ_disp_count=10, **config["ga_params"], **config["train_params"])
+            else:
+                print("Enter a valid input.")
             break
     sys.exit()
 
