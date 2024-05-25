@@ -92,14 +92,11 @@ def visualize_scores(record):
     plt.show()
 
 
-def display_ga_champion(champ_disp_count=1, move_length: int = 100, **params):
+def display_ga_champion(champ_disp_count=1, **params):
+    move_length = params.get("move_length")
     theoretical_max = move_length * (move_length + 1) / 2
     logging.info(f"Theoretical Max Score: {theoretical_max}")
-    best_moves, record = genetic_algorithm(initial_mutation_chance=.8,
-                                           move_length=move_length,
-                                           display_interval=200,
-                                           train_fps=40960,
-                                           **params)
+    best_moves, record = genetic_algorithm(**params)
     logging.info(
         f"Achieved score (% of theoretical max): %{round(100 * record['champion_scores'][-1] / theoretical_max, 2)}")
     # best_moves=[_%2 for _ in range(5)]
@@ -204,8 +201,7 @@ def display_ne_champion(champ_disp_count=1, **params):
     move_length = params.get("move_length")
     theoretical_max = move_length * (move_length + 1) / 2
     logging.info(f"Theoretical Max Score: {theoretical_max}")
-    best_network, record = network_evolution(move_length=move_length,
-                                             **params)
+    best_network, record = network_evolution(**params)
     logging.info(
         f"Achieved score (% of theoretical max): %{round(100 * record['champion_scores'][-1] / theoretical_max, 2)}")
     # best_moves=[_%2 for _ in range(5)]
@@ -284,9 +280,9 @@ def main():
                 g = Game(**game_params)
                 g.run_game(fps=10, display_interval=1, wait_for_user=True)
             elif mode == "r":
-                display_ga_champion(champ_disp_count=10, **config["ga_params"], **config["train_params"])
+                display_ga_champion(champ_disp_count=100, **config["ga_params"], **config["train_params"])
             elif mode == "n":
-                pass
+                display_ne_champion(champ_disp_count=100, **config["ne_params"], **config["train_params"])
             else:
                 print("Enter a valid input.")
             break
