@@ -20,6 +20,7 @@
     "stagnancy_extra_mutation_chance": 0.02
   },
   "ne_params": {
+    "move_length": 100,
     "generations": 10,
     "pop_size": 20,
     "layer_sizes": [
@@ -28,5 +29,6 @@
     ],
     "network_update_variance": 1,
     "layer_activation": "relu"
-  }
+  },
+  "fps": 64
 }

@@ -15,13 +15,19 @@ from optuna.visualization import plot_param_importances
 from optuna.visualization import plot_optimization_history
 import logging
 
+colors = {
+    "BLACK": (45, 45, 45),
+    "WHITE": (255, 255, 255),
+    "GRAY": (200, 200, 200),
+    "GREEN": (0, 153, 51),
+    "PLAYER_COLOR": (153, 0, 0),
+    "HIGHLIGHT_COLOR": (255, 255, 0),  # Yellow for highlight
+    "TRACK_COLOR": (102, 153, 255)
+}
 # logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.basicConfig(level=logging.INFO)
 
-
-# import cProfile
 # cProfile.run("g.run_game(fps=40960, display_interval=10000)", sort="tottime")
-
 
 def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_interval: int, train_fps: int = 4096,
                       **params):
@@ -86,7 +92,7 @@ def visualize_scores(record):
     plt.show()
 
 
-def display_ga_champion(champ_disp_count=1, move_length: int = 100, params: dict = None):
+def display_ga_champion(champ_disp_count=1, move_length: int = 100, **params):
     theoretical_max = move_length * (move_length + 1) / 2
     logging.info(f"Theoretical Max Score: {theoretical_max}")
     best_moves, record = genetic_algorithm(initial_mutation_chance=.8,
@@ -99,7 +105,6 @@ def display_ga_champion(champ_disp_count=1, move_length: int = 100, params: dict
     # best_moves=[_%2 for _ in range(5)]
     # print(best_moves)
     for _ in range(champ_disp_count):
-        g = Game(**game_params)
         g = Game(player_count=1,
                  player_starting_positions="fixed",
                  board_config=config["board_config"],
@@ -195,7 +200,8 @@ def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_l
     return champ_network, record
 
 
-def display_ne_champion(champ_disp_count=1, move_length: int = 10, **params):
+def display_ne_champion(champ_disp_count=1, **params):
+    move_length = params.get("move_length")
     theoretical_max = move_length * (move_length + 1) / 2
     logging.info(f"Theoretical Max Score: {theoretical_max}")
     best_network, record = network_evolution(move_length=move_length,
@@ -216,28 +222,17 @@ def display_ne_champion(champ_disp_count=1, move_length: int = 10, **params):
                  colors=colors)
 
         # g.players[0].network = best_network
-        g.run_game(fps=4, display_interval=1, wait_for_user=False)
+        g.run_game(fps=config["fps"], display_interval=1, wait_for_user=False)
         # time.sleep(2)
     pygame.quit()
     visualize_scores(record)
 
 
-colors = {
-    "BLACK": (45, 45, 45),
-    "WHITE": (255, 255, 255),
-    "GRAY": (200, 200, 200),
-    "GREEN": (0, 153, 51),
-    "PLAYER_COLOR": (153, 0, 0),
-    "HIGHLIGHT_COLOR": (255, 255, 0),  # Yellow for highlight
-    "TRACK_COLOR": (102, 153, 255)
-}
+
 
 # display_ne_champion(champ_disp_count=40, **ne_params, **train_params)
 
 """
-
-
-
 run_optimization_with_optuna(
 )"""
 """
@@ -254,12 +249,6 @@ g = Game(player_count=1,
 g.run_game(fps=1, display_interval=1, wait_for_user=False)
 
 """
-
-
-# pygame.quit()
-# print(g.find_winner())
-
-
 def main():
     global config
     with open('src/config.json', 'r') as file:
@@ -296,9 +285,12 @@ def main():
                 g.run_game(fps=10, display_interval=1, wait_for_user=True)
             elif mode == "r":
                 display_ga_champion(champ_disp_count=10, **config["ga_params"], **config["train_params"])
+            elif mode == "n":
+                pass
             else:
                 print("Enter a valid input.")
             break
+    pygame.quit()
     sys.exit()
 
 
