@@ -111,7 +111,7 @@ def display_ga_champion(champ_disp_count=1, **params):
 
         g.mutate_moves(best_moves, mut_chance=0)
         g.run_game(fps=5, display_interval=1, wait_for_user=False)
-        # time.sleep(2)
+        time.sleep(1)
     pygame.quit()
     visualize_scores(record)
 
@@ -168,7 +168,6 @@ def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_l
     champ_network = None
     for gen in range(generations):
         g = Game(player_count=pop_size,
-                 player_starting_positions="fixed",
                  turn_limit=move_length,
                  board_config=config["board_config"],
                  move_generation_type="network",

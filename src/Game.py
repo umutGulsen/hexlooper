@@ -19,9 +19,15 @@ class Game(object):
         hex_count = int((board_config["height"] / row_step - 4) * (board_config["width"] / col_step - 7))
         self.players = []
         self.move_generation_type = move_generation_type
+        random_hex = int(np.random.rand() * hex_count)
         for i in range(player_count):
-            pos = int(np.random.rand() * hex_count) if player_starting_positions == "random" else int(.5 * hex_count)
-            new_player = Player(player_id=i, pos=pos, random_color=random_player_colors, layer_activation=layer_activation)
+            if game_mode == "coexist":
+                pos = random_hex if player_starting_positions == "random" else int(.5 * hex_count)
+            else:
+                pos = int(np.random.rand() * hex_count) if player_starting_positions == "random" else int(
+                    .5 * hex_count)
+            new_player = Player(player_id=i, pos=pos, random_color=random_player_colors,
+                                layer_activation=layer_activation)
             if self.move_generation_type == "list":
                 new_player.generate_random_moves(move_count)
             else:
@@ -165,7 +171,8 @@ class Game(object):
                                 if next_hex is None:
                                     continue
                                 if last_moved_player != -1 or last_moved_player != len(self.players):
-                                    order_check_list = self.players[last_moved_player+1:] + self.players[:last_moved_player+1]
+                                    order_check_list = self.players[last_moved_player + 1:] + self.players[
+                                                                                              :last_moved_player + 1]
                                 else:
                                     order_check_list = self.players
                                 for p_ in order_check_list:

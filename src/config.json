@@ -1,17 +1,17 @@
 {
   "board_config": {
     "height": 500,
-    "width": 600,
+    "width": 400,
     "hex_radius": 16,
     "player_num_fontsize": 25,
     "score_board_font": 26
   },
   "train_params": {
-    "pop_size": 30,
-    "generations": 80,
+    "pop_size": 50,
+    "generations": 50,
     "display_interval": 1,
-    "train_fps": 6400,
-    "move_length": 30
+    "train_fps": 64,
+    "move_length": 50
   },
   "ga_params": {
     "initial_mutation_chance": 0.8,
@@ -20,11 +20,12 @@
     "stagnancy_extra_mutation_chance": 0.02
   },
   "ne_params": {
+    "player_starting_positions": "random",
     "layer_sizes": [
       10,
       24
     ],
-    "network_update_variance": 1,
+    "network_update_variance": 3,
     "layer_activation": "relu"
   },
   "fps": 12

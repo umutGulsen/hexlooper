@@ -75,13 +75,14 @@ class Board:
         self.screen.fill(self.colors["BLACK"])
         hex_list = self.draw_hexgrid(height=self.board_config["height"], width=self.board_config["width"],
                                      hex_radius=self.board_config["hex_radius"])
-
-        for p in players:
+        
+        sorted_player_list = sorted(players, key=lambda x: x.score, reverse=True)
+        for i,p in enumerate(sorted_player_list):
             # text_area = pygame.Rect(500, 100, 30, 30)
             score_text = self.scoreboard_font.render(f"Score: P{p.id}: {p.score} ({p.track_score})", True,
                                                      p.player_color)
             self.draw_player_related_hexes(hex_list, p)
-            self.screen.blit(score_text, (835, 10 + 20 * p.id))
+            self.screen.blit(score_text, (self.board_config["width"]-160, 10 + 20 * i))
             id_text = self.player_num_font.render(f"{p.id}", True, self.colors["BLACK"])
             self.screen.blit(id_text,
                              (hex_list[p.pos].center_x - self.board_config["hex_radius"] / 2.2,
