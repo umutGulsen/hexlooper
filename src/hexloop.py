@@ -159,28 +159,40 @@ def run_optimization_with_optuna(n_trials: int = 20):
 
 
 def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_length: int, display_interval: int,
-                      train_fps: int = 4096, **params):
+                      train_fps: int = 4096, trial_count_per_gen=1, **params):
     theoretical_max = move_length * (move_length + 1) / 2
     record = {}
     generation_scores = np.zeros((generations, pop_size))
+    generation_rewards = np.zeros((generations, pop_size))
     champion_scores = np.zeros(generations)
     champ_score = -1
     champ_network = None
     for gen in range(generations):
-        g = Game(player_count=pop_size,
-                 turn_limit=move_length,
-                 board_config=config["board_config"],
-                 move_generation_type="network",
-                 game_mode="coexist",
-                 colors=colors,
-                 random_player_colors=True,
-                 layer_sizes=layer_sizes,
-                 base_network=champ_network,
-                 **params)
-        g.run_game(fps=train_fps, display_interval=display_interval)
-        generation_scores[gen, :] = [p.score for p in g.players]
+        trial_scores = np.zeros((trial_count_per_gen, pop_size))
+        trial_rewards = np.zeros((trial_count_per_gen, pop_size))
+        frozen_networks = []
+        for trial in range(trial_count_per_gen):
+            logging.info(f"Started Generation {gen} - Trial {trial}")
+            g = Game(player_count=pop_size,
+                     turn_limit=move_length,
+                     board_config=config["board_config"],
+                     move_generation_type="network",
+                     game_mode="coexist",
+                     colors=colors,
+                     random_player_colors=True,
+                     layer_sizes=layer_sizes,
+                     base_network=champ_network,
+                     frozen_networks=frozen_networks,
+                     **params)
+            g.run_game(fps=train_fps, display_interval=display_interval)
+            trial_scores[trial, :] = [p.score for p in g.players]
+            trial_rewards[trial, :] = [p.reward for p in g.players]
 
-        gen_champ, best_score = g.find_winner()
+        generation_scores[gen, :] = np.mean(trial_scores, axis=0)
+        generation_rewards[gen, :] = np.mean(trial_rewards, axis=0)
+
+        gen_champ, best_score = g.find_winner(generation_rewards[gen, :])
+        best_score = generation_scores[gen, generation_rewards[gen, :].argmax()]
         # best_score += gen_champ.track_score / 5
 
         if best_score > champ_score:
@@ -279,9 +291,9 @@ def main():
                 g = Game(**game_params)
                 g.run_game(fps=10, display_interval=1, wait_for_user=True)
             elif mode == "r":
-                display_ga_champion(champ_disp_count=100, **config["ga_params"], **config["train_params"])
+                display_ga_champion(champ_disp_count=3, **config["ga_params"], **config["train_params"])
             elif mode == "n":
-                display_ne_champion(champ_disp_count=100, **config["ne_params"], **config["train_params"])
+                display_ne_champion(champ_disp_count=30, **config["ne_params"], **config["train_params"])
             else:
                 print("Enter a valid input.")
             break

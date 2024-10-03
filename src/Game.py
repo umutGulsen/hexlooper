@@ -12,7 +12,7 @@ class Game(object):
     def __init__(self, player_count: int, board_config, player_starting_positions="random", move_count=0,
                  turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str = "default",
                  random_player_colors=False, layer_sizes=None, base_network=None, network_update_variance=1,
-                 layer_activation=""):
+                 layer_activation="", frozen_networks=[]):
 
         row_step = int((3 ** .5) * board_config["hex_radius"] * (2 / 4))
         col_step = int(3 * board_config["hex_radius"])
@@ -41,7 +41,7 @@ class Game(object):
         self.game_mode = game_mode
         self.hex_list = []
         self.base_game_state = None
-
+        self.frozen_networks = frozen_networks
         self.board = Board(board_config, colors)
 
     def execute_move_from_candidates(self, possible_moves, p):
@@ -119,6 +119,51 @@ class Game(object):
         # logging.debug(f"{np.sum(self.base_game_state[:, 2])} hexes have players")
         # logging.debug(f"{np.sum(self.base_game_state[:, 3])} hexes are tracks")
 
+    def set_up_networks(self):
+        for i, p in enumerate(self.players):
+            dims = {"n_hexes": len(self.hex_list),
+                    "hex_state": 7,
+                    "action_count": 6}
+            if len(self.frozen_networks) == 0:
+                p.initialize_network(dims, self.layer_sizes, self.game_mode)
+                if self.base_network is not None:
+                    p.network = copy.deepcopy(self.base_network)
+
+                p.network.randomly_initialize_params(self.network_update_variance)
+            else:
+                p.network = copy.deepcopy(self.frozen_networks[i])
+
+    def apply_manual_click_to_move(self, event, last_moved_player):
+        mouse_x, mouse_y = event.pos
+        next_hex = find_closest_hex(self.hex_list, mouse_x, mouse_y)
+        if next_hex is None:
+            return last_moved_player
+        if last_moved_player != -1 or last_moved_player != len(self.players):
+            order_check_list = self.players[last_moved_player + 1:] + self.players[
+                                                                      :last_moved_player + 1]
+        else:
+            order_check_list = self.players
+        for p_ in order_check_list:
+            current_hex = self.hex_list[p_.pos]
+            backtrack = any(next_hex.ix == hex_pos for hex_pos in p_.track)
+            occupied = any(next_hex.ix == other_p.pos for other_p in self.players)
+            if current_hex.is_neighbor(next_hex) and (
+                    not backtrack or next_hex.ix == p_.nest) and not occupied:
+                p_.move(next_hex.ix, self.hex_list)
+                last_moved_player = p_.id
+                self.update_base_game_state()
+                current_hex.find_move_code(next_hex)
+                if self.base_game_state[next_hex.ix, 3] == 1:
+                    for other_p in self.players:
+                        if p_.id != other_p.id and any(
+                                next_hex.ix == hex_pos for hex_pos in other_p.track):
+                            other_p.crash_track()
+                break
+            else:
+                logging.info(
+                    f"Cannot move to that hex!(is neighbor:{current_hex.is_neighbor(next_hex)}  {backtrack=}")
+        return last_moved_player
+
     def run_game(self, fps=64, display_interval: int = 1, wait_for_user=False, show_first_frame=True):
         pygame.init()
         running = True
@@ -135,14 +180,7 @@ class Game(object):
                 if first:
                     self.update_base_game_state()
                     if self.move_generation_type == "network":
-                        for p in self.players:
-                            dims = {"n_hexes": len(self.hex_list),
-                                    "hex_state": 7,
-                                    "action_count": 6}
-                            p.initialize_network(dims, self.layer_sizes, self.game_mode)
-                            if self.base_network is not None:
-                                p.network = copy.deepcopy(self.base_network)
-                            p.network.randomly_initialize_params(self.network_update_variance)
+                        self.set_up_networks()
                 first = False
 
             for p in self.players:
@@ -166,34 +204,9 @@ class Game(object):
                             if event.type == pygame.QUIT:
                                 running = False
                             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                                mouse_x, mouse_y = event.pos
-                                next_hex = find_closest_hex(self.hex_list, mouse_x, mouse_y)
-                                if next_hex is None:
-                                    continue
-                                if last_moved_player != -1 or last_moved_player != len(self.players):
-                                    order_check_list = self.players[last_moved_player + 1:] + self.players[
-                                                                                              :last_moved_player + 1]
-                                else:
-                                    order_check_list = self.players
-                                for p_ in order_check_list:
-                                    current_hex = self.hex_list[p_.pos]
-                                    backtrack = any(next_hex.ix == hex_pos for hex_pos in p_.track)
-                                    occupied = any(next_hex.ix == other_p.pos for other_p in self.players)
-                                    if current_hex.is_neighbor(next_hex) and (
-                                            not backtrack or next_hex.ix == p_.nest) and not occupied:
-                                        p_.move(next_hex.ix, self.hex_list)
-                                        last_moved_player = p_.id
-                                        self.update_base_game_state()
-                                        current_hex.find_move_code(next_hex)
-                                        if self.base_game_state[next_hex.ix, 3] == 1:
-                                            for other_p in self.players:
-                                                if p_.id != other_p.id and any(
-                                                        next_hex.ix == hex_pos for hex_pos in other_p.track):
-                                                    other_p.crash_track()
-                                        break
-                                    else:
-                                        logging.info(
-                                            f"Cannot move to that hex!(is neighbor:{current_hex.is_neighbor(next_hex)}   {backtrack=}")
+                                last_moved_player = self.apply_manual_click_to_move(event, last_moved_player)
+
+
             if show_this_time:
                 pygame.display.flip()
             if fps < 1000:
@@ -203,14 +216,21 @@ class Game(object):
         if self.game_mode == "just_play":
             self.display_scores()
 
-    def find_winner(self):
+    def find_winner(self, generation_rewards=[]):
         max_score = -1
         champion = None
-        for p in self.players:
-            if p.reward > max_score:
-                max_score = p.reward
-                champion = p
-        return champion, p.score
+        if len(generation_rewards) == 0:
+            for p in self.players:
+                if p.reward > max_score:
+                    max_score = p.reward
+                    champion = p
+            return champion, p.score
+        else:
+            for i, p in enumerate(self.players):
+                if generation_rewards[i] > max_score:
+                    max_score = generation_rewards[i]
+                    champion = p
+            return champion, generation_rewards[i]
 
     def mutate_moves(self, move_list, mut_chance):
         for p in self.players:
