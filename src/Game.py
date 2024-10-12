@@ -109,15 +109,21 @@ class Game(object):
             change_happened = True
         return change_happened
 
-    def update_base_game_state(self):
+    def update_base_game_state(self, moved_player=None):
         self.base_game_state = np.zeros((len(self.hex_list), 7))
-        for p in self.players:
-            self.base_game_state[p.nest, 1] = 1
-            self.base_game_state[p.pos, 2] = 1
-            self.base_game_state[p.track, 3] = 1
-        self.base_game_state[:, 0] = (1 - np.sum(self.base_game_state[:, [1, 2, 3]], axis=1)).clip(min=0)
-        for p in self.players:
-            p.update_game_state(self.base_game_state)
+        if self.game_mode != "coexist" or moved_player is None:
+            for p in self.players:
+                self.base_game_state[p.nest, 1] = 1
+                self.base_game_state[p.pos, 2] = 1
+                self.base_game_state[p.track, 3] = 1
+            self.base_game_state[:, 0] = (1 - np.sum(self.base_game_state[:, [1, 2, 3]], axis=1)).clip(min=0)
+
+            for p in self.players:
+
+                p.update_game_state(self.base_game_state, self.hex_list)
+
+        else:
+            moved_player.update_game_state(self.base_game_state, self.hex_list)
 
         # logging.debug(self.base_game_state)
         # logging.debug(f"{np.sum(self.base_game_state[:, 0])} hexes are empty")
@@ -157,7 +163,7 @@ class Game(object):
                     not backtrack or next_hex.ix == p_.nest) and not occupied:
                 p_.move(next_hex.ix, self.hex_list, self.hex_radius)
                 last_moved_player = p_.id
-                self.update_base_game_state()
+                self.update_base_game_state(p_)
                 current_hex.find_move_code(next_hex)
                 if self.base_game_state[next_hex.ix, 3] == 1:
                     for other_p in self.players:
