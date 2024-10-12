@@ -7,9 +7,9 @@
     "score_board_font": 26
   },
   "train_params": {
-    "pop_size": 30,
-    "generations": 100,
-    "display_interval": 2,
+    "pop_size": 20,
+    "generations": 50,
+    "display_interval": 3,
     "train_fps": 1024,
     "move_length": 5,
     "trial_count_per_gen": 10

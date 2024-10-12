@@ -58,7 +58,7 @@ class Player:
         self.score += self.track_score
         self.track_score = 0
 
-    def move(self, next_pos, hex_list):
+    def move(self, next_pos, hex_list, hex_radius):
         self.pos = next_pos
         if next_pos == self.nest:
             self.complete_loop()
@@ -69,7 +69,9 @@ class Player:
         self.reward = self.score
         if not self.pos == self.nest:
             ...
-            self.reward += .000001 * hex_list[self.pos].r * self.track_score / distance_between_hexes(hex_list[self.pos], hex_list[self.nest])
+            dist_nest = distance_between_hexes(hex_list[self.pos], hex_list[self.nest])
+            hex_per_distance = dist_nest / hex_radius
+            self.reward += .1 * self.track_score / hex_per_distance
 
     def crash_track(self):
         self.nest = self.pos

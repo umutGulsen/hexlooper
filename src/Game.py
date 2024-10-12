@@ -48,6 +48,7 @@ class Game(object):
         self.base_game_state = None
         self.frozen_networks = frozen_networks
         self.board = Board(board_config, colors)
+        self.hex_radius = board_config["hex_radius"]
 
     def execute_move_from_candidates(self, possible_moves, p):
         change_happened = False
@@ -62,7 +63,7 @@ class Game(object):
                 neighbored = current_hex.is_neighbor(next_hex)
 
                 if neighbored and not backtrack and not occupied:
-                    p.move(next_hex.ix, self.hex_list)
+                    p.move(next_hex.ix, self.hex_list, self.hex_radius)
                     change_happened = True
                     if self.game_mode != "coexist" and self.base_game_state[next_hex.ix, 3]:
                         for other_p in self.players:
@@ -94,7 +95,7 @@ class Game(object):
 
         if neighbored:
             if not backtrack and not occupied:
-                p.move(next_hex.ix, self.hex_list)
+                p.move(next_hex.ix, self.hex_list, self.hex_radius)
                 change_happened = True
                 if self.game_mode != "coexist" and self.base_game_state[next_hex.ix, 3]:
                     for other_p in self.players:
@@ -154,7 +155,7 @@ class Game(object):
             occupied = any(next_hex.ix == other_p.pos for other_p in self.players)
             if current_hex.is_neighbor(next_hex) and (
                     not backtrack or next_hex.ix == p_.nest) and not occupied:
-                p_.move(next_hex.ix, self.hex_list)
+                p_.move(next_hex.ix, self.hex_list, self.hex_radius)
                 last_moved_player = p_.id
                 self.update_base_game_state()
                 current_hex.find_move_code(next_hex)
