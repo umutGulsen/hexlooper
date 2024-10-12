@@ -68,13 +68,14 @@ class Player:
         self.consec_stalls = 0
         self.reward = self.score
         if not self.pos == self.nest:
+            ...
             self.reward += .000001 * hex_list[self.pos].r * self.track_score / distance_between_hexes(hex_list[self.pos], hex_list[self.nest])
 
     def crash_track(self):
         self.nest = self.pos
         self.track = [self.nest]
         self.track_score = 0
-        self.reward /= 2
+        #self.reward /= 2
 
     def generate_move_from_fixed_list(self):
         if len(self.move_list) == 0:

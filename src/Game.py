@@ -9,17 +9,22 @@ import copy
 
 class Game(object):
 
-    def __init__(self, player_count: int, board_config, player_starting_positions="random", move_count=0,
+    def __init__(self, player_count: int, board_config, generation="NA", player_starting_positions="random", move_count=0,
                  turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str = "default",
                  random_player_colors=False, layer_sizes=None, base_network=None, network_update_variance=1,
                  layer_activation="", frozen_networks=[]):
 
         row_step = int((3 ** .5) * board_config["hex_radius"] * (2 / 4))
         col_step = int(3 * board_config["hex_radius"])
-        hex_count = int((board_config["height"] / row_step - 4) * (board_config["width"] / col_step - 7))
+        hex_count = 0
+        for row in range(2 * row_step, board_config["height"] - 2 * row_step, row_step):
+            for col in range(int(.6 * col_step), board_config["width"] - 240, col_step):
+                hex_count += 1
+        #hex_count = int((board_config["height"] / row_step) * (board_config["width"] / col_step))
         self.players = []
+        self.generation = generation
         self.move_generation_type = move_generation_type
-        random_hex = int(np.random.rand() * hex_count)
+        random_hex = int(np.random.rand() * hex_count)#int(.5 * hex_count)
         for i in range(player_count):
             if game_mode == "coexist":
                 pos = random_hex if player_starting_positions == "random" else int(.5 * hex_count)
@@ -176,7 +181,7 @@ class Game(object):
         while running:
             show_this_time = self.turn % display_interval == 0 or (first and show_first_frame)
             if show_this_time:
-                self.hex_list = self.board.display_game(players=self.players, highlight=False)
+                self.hex_list = self.board.display_game(players=self.players, generation=self.generation, highlight=False)
                 if first:
                     self.update_base_game_state()
                     if self.move_generation_type == "network":
@@ -224,7 +229,7 @@ class Game(object):
                 if p.reward > max_score:
                     max_score = p.reward
                     champion = p
-            return champion, p.score
+            return champion, max_score
         else:
             for i, p in enumerate(self.players):
                 if generation_rewards[i] > max_score:

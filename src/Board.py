@@ -32,7 +32,7 @@ class Board:
         hex_list: list[Hex] = []
         for row in range(2 * row_step, height - 2 * row_step, row_step):
             step = (1 - step)
-            for col in range(1 * col_step, width - 6 * col_step, col_step):
+            for col in range(int(.6 * col_step), width - 240, col_step):
                 self.draw_hexagon(col + step * 1.5 * hex_radius, row, r=self.board_config["hex_radius"],
                                   edge_color=self.colors["GRAY"], fill_color=self.colors["BLACK"])
                 new_hex = Hex(ix=len(hex_list), r=hex_radius,
@@ -71,18 +71,21 @@ class Board:
                           edge_color=self.colors["GRAY"], fill_color=p.player_color)
         self.draw_track(p, hex_list)
 
-    def display_game(self, players, highlight=False):
+    def display_game(self, players, generation, highlight=False):
         self.screen.fill(self.colors["BLACK"])
         hex_list = self.draw_hexgrid(height=self.board_config["height"], width=self.board_config["width"],
                                      hex_radius=self.board_config["hex_radius"])
         
         sorted_player_list = sorted(players, key=lambda x: x.score, reverse=True)
-        for i,p in enumerate(sorted_player_list):
+        gen_text = self.scoreboard_font.render(f"Gen {generation}", True, self.colors["GRAY"])
+        self.screen.blit(gen_text, (self.board_config["width"] - 160, 10))
+        for i, p in enumerate(sorted_player_list):
             # text_area = pygame.Rect(500, 100, 30, 30)
             score_text = self.scoreboard_font.render(f"Score: P{p.id}: {p.score} ({p.track_score})", True,
                                                      p.player_color)
             self.draw_player_related_hexes(hex_list, p)
-            self.screen.blit(score_text, (self.board_config["width"]-160, 10 + 20 * i))
+
+            self.screen.blit(score_text, (self.board_config["width"]-160, 30 + 20 * i))
             id_text = self.player_num_font.render(f"{p.id}", True, self.colors["BLACK"])
             self.screen.blit(id_text,
                              (hex_list[p.pos].center_x - self.board_config["hex_radius"] / 2.2,

@@ -29,6 +29,7 @@ logging.basicConfig(level=logging.INFO)
 
 # cProfile.run("g.run_game(fps=40960, display_interval=10000)", sort="tottime")
 
+
 def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_interval: int, train_fps: int = 4096,
                       **params):
     generations = params.get("generations")
@@ -47,6 +48,7 @@ def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_
     for gen in range(generations):
         logging.info(f"Started Generation {gen}")
         g = Game(player_count=pop_size,
+                 generation=gen,
                  player_starting_positions="fixed",
                  board_config=config["board_config"],
                  move_count=move_length,
@@ -76,7 +78,7 @@ def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_
             champ_score = best_score
             champ_moves = copy.deepcopy(gen_champ.static_move_list)
         champion_scores[gen] = champ_score
-        logging.info(f"Finished Generation {gen} with score: {best_score} / Last Champ: {champ_score}")
+        logging.info(f"Finished Generation {gen} with score: {best_score:0f} / Last Champ: {champ_score:0f}")
         record["champion_scores"] = champion_scores
         record["generation_scores"] = generation_scores
     return champ_moves, record
@@ -84,6 +86,7 @@ def genetic_algorithm(initial_mutation_chance: float, move_length: int, display_
 
 def visualize_scores(record):
     plt.plot(record["champion_scores"])
+    plt.plot(np.mean(record["generation_scores"], axis=1))
 
     for g, gen_score_list in enumerate(record["generation_scores"]):
         sns.scatterplot(x=[g for _ in range(gen_score_list.shape[0])], y=gen_score_list, color="k", hue=gen_score_list,
@@ -103,6 +106,7 @@ def display_ga_champion(champ_disp_count=1, **params):
     # print(best_moves)
     for _ in range(champ_disp_count):
         g = Game(player_count=1,
+                 generation="CHAMP",
                  player_starting_positions="fixed",
                  board_config=config["board_config"],
                  move_count=move_length,
@@ -174,6 +178,7 @@ def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_l
         for trial in range(trial_count_per_gen):
             logging.info(f"Started Generation {gen} - Trial {trial}")
             g = Game(player_count=pop_size,
+                     generation=gen,
                      turn_limit=move_length,
                      board_config=config["board_config"],
                      move_generation_type="network",
@@ -219,7 +224,8 @@ def display_ne_champion(champ_disp_count=1, **params):
     # print(best_moves)
     for _ in range(champ_disp_count):
         g = Game(player_count=1,
-                 player_starting_positions="fixed",
+                 generation="CHAMP",
+                 player_starting_positions="random",
                  board_config=config["board_config"],
                  turn_limit=move_length,
                  move_generation_type="network",
@@ -293,7 +299,7 @@ def main():
             elif mode == "r":
                 display_ga_champion(champ_disp_count=3, **config["ga_params"], **config["train_params"])
             elif mode == "n":
-                display_ne_champion(champ_disp_count=30, **config["ne_params"], **config["train_params"])
+                display_ne_champion(champ_disp_count=10, **config["ne_params"], **config["train_params"])
             else:
                 print("Enter a valid input.")
             break
