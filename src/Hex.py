@@ -88,3 +88,23 @@ class Hex:
         new_x = self.center_x + 2 * self.r * math.cos(math.radians(angle))
         new_y = self.center_y - 2 * self.r * math.sin(math.radians(angle))
         return new_x, new_y
+
+    def generate_move_from_code_list(self, codes: [int]) -> Tuple[float, float]:
+        """Generate new coordinates based on the move code.
+
+        Args:
+            code (int): Move code indicating the direction.
+
+        Returns:
+            Tuple[float, float]: New x, y coordinates.
+        """
+        current_center_x = self.center_x
+        current_center_y = self.center_y
+        for code in codes:
+            angle = -30 + code * 60
+            new_x = current_center_x + 2 * self.r * math.cos(math.radians(angle))
+            new_y = current_center_y - 2 * self.r * math.sin(math.radians(angle))
+            current_center_x = new_x
+            current_center_y = new_y
+
+        return new_x, new_y

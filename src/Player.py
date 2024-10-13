@@ -50,8 +50,8 @@ class Player:
         if layer_sizes is None:
             layer_sizes = [1]
         if game_mode == "coexist":
-            #input_size = dims["n_hexes"] * (dims["hex_state"] - 5) + 18
-            input_size = 18
+            # input_size = dims["n_hexes"] * (dims["hex_state"] - 5) + 18
+            input_size = 54
         else:
             input_size = dims["n_hexes"] * dims["hex_state"] + 18
         layer_sizes.append(dims["action_count"])
@@ -81,7 +81,7 @@ class Player:
         self.nest = self.pos
         self.track = [self.nest]
         self.track_score = 0
-        #self.reward /= 2
+        # self.reward /= 2
 
     def generate_move_from_fixed_list(self):
         if len(self.move_list) == 0:
@@ -105,15 +105,59 @@ class Player:
             else:
                 relevant_game_state = self.player_game_state
 
-            flat_game_state = relevant_game_state.reshape(relevant_game_state.shape[0] * relevant_game_state.shape[1], 1)
-            #input_x = np.concatenate((flat_game_state, self.near_view_state), axis=0)
+            flat_game_state = relevant_game_state.reshape(relevant_game_state.shape[0] * relevant_game_state.shape[1],
+                                                          1)
+            # input_x = np.concatenate((flat_game_state, self.near_view_state), axis=0)
             input_x = self.near_view_state
             return self.generate_move_from_network(x=input_x)
 
         elif generation_type == "fixed":
             return int(1)
 
+    def do_hex_status_check(self, i, next_hex, is_nest_one_hot, is_route_one_hot, is_off_bounds_one_hot):
+        if next_hex is None:
+            is_off_bounds_one_hot[0, i] = 1
+            return is_nest_one_hot, is_route_one_hot, is_off_bounds_one_hot
+
+        elif self.nest == next_hex.ix:
+            is_nest_one_hot[0, i] = 1
+            return is_nest_one_hot, is_route_one_hot, is_off_bounds_one_hot
+
+        elif next_hex.ix in self.track:
+            is_route_one_hot[0, i] = 1
+            return is_nest_one_hot, is_route_one_hot, is_off_bounds_one_hot
+
+        else:
+            return is_nest_one_hot, is_route_one_hot, is_off_bounds_one_hot
+
     def create_near_view_state(self, hex_list):
+        p_hex = hex_list[self.pos]
+        is_nest_one_hot = np.zeros((1, 18))
+        is_route_one_hot = np.zeros((1, 18))
+        is_off_bounds_one_hot = np.zeros((1, 18))
+        secondary_hex_index_in_array = 6
+        for primary_move in range(1, 7):
+            new_x, new_y = p_hex.generate_move_from_code(primary_move)
+            next_hex = find_closest_hex(hex_list, new_x, new_y)
+            is_nest_one_hot, is_route_one_hot, is_off_bounds_one_hot = self.do_hex_status_check(primary_move - 1, next_hex,
+                                                                                                is_nest_one_hot,
+                                                                                                is_route_one_hot,
+                                                                                                is_off_bounds_one_hot)
+
+            for secondary_move in [primary_move, (primary_move + 1) % 6]:
+                new_x, new_y = p_hex.generate_move_from_code_list([primary_move, secondary_move])
+                next_hex = find_closest_hex(hex_list, new_x, new_y)
+                s_nest_one_hot, is_route_one_hot, is_off_bounds_one_hot = self.do_hex_status_check(secondary_hex_index_in_array,
+                                                                                                   next_hex,
+                                                                                                   is_nest_one_hot,
+                                                                                                   is_route_one_hot,
+                                                                                                   is_off_bounds_one_hot)
+                secondary_hex_index_in_array += 1
+
+        self.near_view_state = np.reshape(
+            np.concatenate((is_nest_one_hot, is_route_one_hot, is_off_bounds_one_hot), axis=1), (54, 1))
+
+    def create_adjacent_view_state(self, hex_list):
         p_hex = hex_list[self.pos]
         is_nest_one_hot = np.zeros((1, 6))
         is_route_one_hot = np.zeros((1, 6))
@@ -121,18 +165,13 @@ class Player:
         for i in range(1, 7):
             new_x, new_y = p_hex.generate_move_from_code(i)
             next_hex = find_closest_hex(hex_list, new_x, new_y)
-            if next_hex is None:
-                is_off_bounds_one_hot[0, i - 1] = 1
-                continue
+            _nest_one_hot, is_route_one_hot, is_off_bounds_one_hot = self.do_hex_status_check(i, next_hex,
+                                                                                              is_nest_one_hot,
+                                                                                              is_route_one_hot,
+                                                                                              is_off_bounds_one_hot)
 
-            elif self.nest == next_hex.ix:
-                is_nest_one_hot[0, i - 1] = 1
-                continue
-
-            elif next_hex.ix in self.track:
-                is_route_one_hot[0, i - 1] = 1
-
-        self.near_view_state = np.reshape(np.concatenate((is_nest_one_hot, is_route_one_hot, is_off_bounds_one_hot), axis=1), (18, 1))
+        self.near_view_state = np.reshape(
+            np.concatenate((is_nest_one_hot, is_route_one_hot, is_off_bounds_one_hot), axis=1), (18, 1))
 
     def update_game_state(self, base_game_state, hex_list):
         self.player_game_state = base_game_state.copy()
