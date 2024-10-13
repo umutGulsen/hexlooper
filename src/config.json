@@ -23,11 +23,12 @@
   "ne_params": {
     "player_starting_positions": "random",
     "layer_sizes": [
-      10,
-      10
+      8,
+      8
     ],
     "network_update_variance": 1,
     "layer_activation": "relu"
   },
+  "stagnant_network_update_variance": 5,
   "fps": 12
 }

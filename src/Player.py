@@ -5,6 +5,7 @@ from Network import Network
 from utils import distance_between_hexes
 from utils import find_closest_hex
 
+
 class Player:
     def __init__(self, player_id, pos, random_color=False, layer_activation=""):
         self.id = player_id

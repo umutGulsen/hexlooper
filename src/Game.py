@@ -11,8 +11,8 @@ class Game(object):
 
     def __init__(self, player_count: int, board_config, generation="NA", player_starting_positions="random", move_count=0,
                  turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str = "default",
-                 random_player_colors=False, layer_sizes=None, base_network=None, network_update_variance=1,
-                 layer_activation="", frozen_networks=[]):
+                 random_player_colors=False, layer_sizes=None, base_network=None, network_update_variance=1, stagnant_network_update_variance=5,
+                 layer_activation="", frozen_networks=[], ne_stagnancy=False):
 
         row_step = int((3 ** .5) * board_config["hex_radius"] * (2 / 4))
         col_step = int(3 * board_config["hex_radius"])
@@ -38,7 +38,11 @@ class Game(object):
             else:
                 self.layer_sizes = layer_sizes
                 self.base_network = base_network
-                self.network_update_variance = network_update_variance
+                if ne_stagnancy:
+                    self.network_update_variance = stagnant_network_update_variance
+                else:
+                    self.network_update_variance = network_update_variance
+
             self.players.append(new_player)
 
         self.turn = 0

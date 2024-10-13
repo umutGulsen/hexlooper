@@ -191,12 +191,17 @@ def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_l
     champ_score = -1
     champ_network = None
     stagnancy_length = 10
+    stagnancy_extra_var = 5
     for gen in range(generations):
         trial_scores = np.zeros((trial_count_per_gen, pop_size))
         trial_rewards = np.zeros((trial_count_per_gen, pop_size))
         frozen_networks = []
         if gen > stagnancy_length:
-            scores_stagnant = champion_scores[gen - stagnancy_length] == champion_scores[gen - 1]
+            scores_stagnant = champion_scores[gen - stagnancy_length - 1] == champion_scores[gen - 1]
+        else:
+            scores_stagnant = False
+        if scores_stagnant:
+            logging.info(f"Stagnancy detected in Gen {gen}!")
         for trial in range(trial_count_per_gen):
             logging.info(f"Started Generation {gen} - Trial {trial}")
             g = Game(player_count=pop_size,
@@ -210,6 +215,7 @@ def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_l
                      layer_sizes=layer_sizes,
                      base_network=champ_network,
                      frozen_networks=frozen_networks,
+                     ne_stagnancy=scores_stagnant,
                      **params)
             g.run_game(fps=train_fps, display_interval=display_interval)
             trial_scores[trial, :] = [p.score for p in g.players]
