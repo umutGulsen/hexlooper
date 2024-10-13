@@ -265,7 +265,8 @@ def display_ne_champion(champ_disp_count=1, **params):
         # g.players[0].network = best_network
         g.run_game(fps=config["fps"], display_interval=1, wait_for_user=False)
         # time.sleep(2)
-
+    pass
+    print("aaa")
     while True:
         re = input("Rewatch? (y/n)")
         if re == "y":

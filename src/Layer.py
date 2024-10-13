@@ -10,7 +10,7 @@ class Layer:
 
     def randomize_params(self, network_update_variance):
         self.weights += network_update_variance * np.random.randn(self.weights.shape[0], self.weights.shape[1])
-        self.biases += network_update_variance * np.random.randn(1, self.biases.shape[1])
+        self.biases += network_update_variance * np.random.randn(self.biases.shape[0], 1)
 
     def activation(self, x):
         if self.activation_method == "relu":

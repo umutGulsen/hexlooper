@@ -54,7 +54,7 @@ class Player:
             input_size = 54
         else:
             input_size = dims["n_hexes"] * dims["hex_state"] + 18
-        layer_sizes.append(dims["action_count"])
+        #layer_sizes.append(dims["action_count"])
         self.network = Network(layer_sizes, input_size, activator=self.layer_activation)
 
     def complete_loop(self):

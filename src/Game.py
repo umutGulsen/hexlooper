@@ -24,6 +24,7 @@ class Game(object):
         self.players = []
         self.generation = generation
         self.move_generation_type = move_generation_type
+        #layer_sizes.append(6)
         random_hex = int(np.random.rand() * hex_count)#int(.5 * hex_count)
         for i in range(player_count):
             if game_mode == "coexist":
