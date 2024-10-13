@@ -49,7 +49,8 @@ class Player:
         if layer_sizes is None:
             layer_sizes = [1]
         if game_mode == "coexist":
-            input_size = dims["n_hexes"] * (dims["hex_state"] - 5) + 18
+            #input_size = dims["n_hexes"] * (dims["hex_state"] - 5) + 18
+            input_size = 18
         else:
             input_size = dims["n_hexes"] * dims["hex_state"] + 18
         layer_sizes.append(dims["action_count"])
@@ -73,7 +74,7 @@ class Player:
             ...
             dist_nest = distance_between_hexes(hex_list[self.pos], hex_list[self.nest])
             hex_per_distance = dist_nest / hex_radius
-            self.reward += .1 * self.track_score / hex_per_distance
+            self.reward += .3 * self.track_score / hex_per_distance
 
     def crash_track(self):
         self.nest = self.pos
@@ -104,7 +105,8 @@ class Player:
                 relevant_game_state = self.player_game_state
 
             flat_game_state = relevant_game_state.reshape(relevant_game_state.shape[0] * relevant_game_state.shape[1], 1)
-            input_x = np.concatenate((flat_game_state, self.near_view_state), axis=0)
+            #input_x = np.concatenate((flat_game_state, self.near_view_state), axis=0)
+            input_x = self.near_view_state
             return self.generate_move_from_network(x=input_x)
 
         elif generation_type == "fixed":

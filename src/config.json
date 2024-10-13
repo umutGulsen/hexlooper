@@ -8,11 +8,11 @@
   },
   "train_params": {
     "pop_size": 30,
-    "generations": 100,
+    "generations": 40,
     "display_interval": 5,
     "train_fps": 1024,
     "move_length": 10,
-    "trial_count_per_gen": 10
+    "trial_count_per_gen": 5
   },
   "ga_params": {
     "initial_mutation_chance": 0.8,
@@ -23,7 +23,6 @@
   "ne_params": {
     "player_starting_positions": "random",
     "layer_sizes": [
-      12,
       10,
       10
     ],
