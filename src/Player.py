@@ -74,8 +74,8 @@ class Player:
         if not self.pos == self.nest:
             ...
             dist_nest = distance_between_hexes(hex_list[self.pos], hex_list[self.nest])
-            hex_per_distance = dist_nest / hex_radius
-            self.reward += .3 * self.track_score / hex_per_distance
+            hex_per_distance = dist_nest / hex_radius / 2
+            self.reward += .3 * self.track_score / (hex_per_distance ** 2)
 
     def crash_track(self):
         self.nest = self.pos

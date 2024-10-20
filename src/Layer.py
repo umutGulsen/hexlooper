@@ -9,8 +9,29 @@ class Layer:
         self.biases = np.zeros((size, 1))
 
     def randomize_params(self, network_update_variance):
-        self.weights += network_update_variance * np.random.randn(self.weights.shape[0], self.weights.shape[1])
-        self.biases += network_update_variance * np.random.randn(self.biases.shape[0], 1)
+        weights_change = network_update_variance * np.random.randn(self.weights.shape[0], self.weights.shape[1])
+
+        static_ratio = 0.5
+        num_elements = weights_change.size
+        num_zeros = int(static_ratio * num_elements)
+        static_indices = np.random.choice(num_elements, num_zeros, replace=False)
+        weights_change.flat[static_indices] = 0
+
+        self.weights += weights_change
+
+        num_elements = weights_change.size
+        num_zeros = int(static_ratio * num_elements)
+        static_indices = np.random.choice(num_elements, num_zeros, replace=False)
+        weights_change.flat[static_indices] = 0
+
+        biases_change = network_update_variance * np.random.randn(self.biases.shape[0], 1)
+
+        num_elements = biases_change.size
+        num_zeros = int(static_ratio * num_elements)
+        static_indices = np.random.choice(num_elements, num_zeros, replace=False)
+        biases_change.flat[static_indices] = 0
+
+        self.biases += biases_change
 
     def activation(self, x):
         if self.activation_method == "relu":

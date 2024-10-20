@@ -12,7 +12,7 @@ class Game(object):
     def __init__(self, player_count: int, board_config, generation="NA", player_starting_positions="random", move_count=0,
                  turn_limit=None, colors=None, move_generation_type="fixed", game_mode: str = "default",
                  random_player_colors=False, layer_sizes=None, base_network=None, network_update_variance=1, stagnant_network_update_variance=5,
-                 layer_activation="", frozen_networks=[], ne_stagnancy=False):
+                 layer_activation="", frozen_networks=[], ne_stagnancy=False, trial=0):
 
         row_step = int((3 ** .5) * board_config["hex_radius"] * (2 / 4))
         col_step = int(3 * board_config["hex_radius"])
@@ -25,7 +25,8 @@ class Game(object):
         self.generation = generation
         self.move_generation_type = move_generation_type
         #layer_sizes.append(6)
-        random_hex = int(np.random.rand() * hex_count)#int(.5 * hex_count)
+        random_hex = int(hex_count * trial / (trial + 1))
+        #int(np.random.rand() * hex_count)#int(.5 * hex_count)
         for i in range(player_count):
             if game_mode == "coexist":
                 pos = random_hex if player_starting_positions == "random" else int(.5 * hex_count)

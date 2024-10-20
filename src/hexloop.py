@@ -190,7 +190,7 @@ def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_l
     champion_scores = np.zeros(generations)
     champ_score = -1
     champ_network = None
-    stagnancy_length = 10
+    stagnancy_length = 30
     stagnancy_extra_var = 5
     for gen in range(generations):
         trial_scores = np.zeros((trial_count_per_gen, pop_size))
@@ -216,6 +216,7 @@ def network_evolution(generations: int, pop_size: int, layer_sizes: list, move_l
                      base_network=champ_network,
                      frozen_networks=frozen_networks,
                      ne_stagnancy=scores_stagnant,
+                     trial=trial,
                      **params)
             g.run_game(fps=train_fps, display_interval=display_interval)
             trial_scores[trial, :] = [p.score for p in g.players]
@@ -250,7 +251,7 @@ def display_ne_champion(champ_disp_count=1, **params):
         f"Achieved score (% of theoretical max): %{round(100 * record['champion_scores'][-1] / theoretical_max, 2)}")
     # best_moves=[_%2 for _ in range(5)]
     # print(best_moves)
-    for _ in range(champ_disp_count):
+    for t in range(champ_disp_count):
         g = Game(player_count=1,
                  generation="CHAMP",
                  player_starting_positions="random",
@@ -260,7 +261,8 @@ def display_ne_champion(champ_disp_count=1, **params):
                  game_mode="coexist",
                  base_network=best_network,
                  network_update_variance=0,
-                 colors=colors)
+                 colors=colors,
+                 trial=t)
 
         # g.players[0].network = best_network
         g.run_game(fps=config["fps"], display_interval=1, wait_for_user=False)
@@ -270,7 +272,7 @@ def display_ne_champion(champ_disp_count=1, **params):
     while True:
         re = input("Rewatch? (y/n)")
         if re == "y":
-            for _ in range(champ_disp_count):
+            for t in range(champ_disp_count):
                 g = Game(player_count=1,
                          generation="CHAMP",
                          player_starting_positions="random",
@@ -280,7 +282,8 @@ def display_ne_champion(champ_disp_count=1, **params):
                          game_mode="coexist",
                          base_network=best_network,
                          network_update_variance=0,
-                         colors=colors)
+                         colors=colors,
+                         trial=t)
                 g.run_game(fps=config["fps"], display_interval=1, wait_for_user=False)
         else:
             break
@@ -341,7 +344,7 @@ def main():
                 g = Game(**game_params)
                 g.run_game(fps=10, display_interval=1, wait_for_user=True)
             elif mode == "r":
-                display_ga_champion(champ_disp_count=30, **config["ga_params"], **config["train_params"])
+                display_ga_champion(champ_disp_count=10, **config["ga_params"], **config["train_params"])
             elif mode == "n":
                 display_ne_champion(champ_disp_count=10, **config["ne_params"], **config["train_params"])
             else:
